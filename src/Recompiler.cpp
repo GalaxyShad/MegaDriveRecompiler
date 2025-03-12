@@ -621,8 +621,60 @@ void Recompiler::asd(RotationDirection d, AddressingMode m, u8 xn) {
 }
 
 
-void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
+void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {///
+  // NOT_IMPLEMENTED
+
+  std::string src = "";
+  std::string post = "";
+  std::string pre = "";
+
+  switch (m) {
+    case AddressingMode::Address: {
+      src = Code::an(xn);
+      break;
+    }
+    case AddressingMode::AddressWithPostIncrement: {
+      NOT_IMPLEMENTED
+      // src = Code::an(xn);
+      // post = Code::incr_an(s, xn);
+      break;
+    }
+    case AddressingMode::AddressWithPreDecrement: {
+      NOT_IMPLEMENTED
+      // src = Code::an(xn);
+      // pre = Code::decr_an(s, xn);
+      break;
+    }
+    case AddressingMode::AddressWithDisplacement:
+    case AddressingMode::AddressWithIndex: {
+      NOT_IMPLEMENTED
+    }
+
+    case AddressingMode::AbsWord: {
+      u16 w = src_.get_next_word();
+      src = Code::imm(w);
+      break;
+    }
+    case AddressingMode::AbsLong: {
+      u32 l = src_.get_next_long();
+      src = Code::imm(l);
+      break;
+    }
+
+    case AddressingMode::DataRegister:
+    case AddressingMode::AddressRegister:
+    case AddressingMode::Immediate:
+    case AddressingMode::PcWithDisplacement:
+    case AddressingMode::PcWithIndex:
+    default: { throw ("Fatal Error"); }
+  }
+
+  if(d == RotationDirection::Left){
+    flow_.ctx().writeln(pre + std::format("{} <<= 1;", src) + post);
+  }
+  else{
+    flow_.ctx().writeln(pre + std::format("{} >>= 1;", src) + post);
+  }
 }
 
 
@@ -647,7 +699,7 @@ void Recompiler::lsd_rotation(u8 rotation, RotationDirection d, Size s,
   std::string count_shift;
   switch (m) {
     case Rotation::Immediate: {
-      count_shift = std::format("{}", rotation);
+      count_shift = std::format("{}", rotation ? rotation : 8);
       break;
     }
     case Rotation::Register:{
@@ -659,7 +711,7 @@ void Recompiler::lsd_rotation(u8 rotation, RotationDirection d, Size s,
     }
   }
 
-  if(d ==RotationDirection::Left){
+  if(d == RotationDirection::Left){
     flow_.ctx().writeln(std::format("{} <<= {};", Code::dn(dn), count_shift));
   }
   else{
