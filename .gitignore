@@ -1,0 +1,6 @@
+build/
+unused/
+.cache/
+.vscode/
+**/*.DS_Store
+recompiled/recompiled.c
