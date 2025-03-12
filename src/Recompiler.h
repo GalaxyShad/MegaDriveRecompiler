@@ -27,17 +27,17 @@ public:
   void bchg(AddressingMode m, u8 xn, u8 bitindex) override;
   void bclr(AddressingMode m, u8 xn, u8 bitindex) override;
   void bset(AddressingMode m, u8 xn, u8 bitindex) override;
-  void btst_dn(u8 dn, AddressingMode m, u8 reg, u8 bitindex) override;
-  void bchg_dn(u8 dn, AddressingMode m, u8 reg, u8 bitindex) override;
-  void bclr_dn(u8 dn, AddressingMode m, u8 reg, u8 bitindex) override;
-  void bset_dn(u8 dn, AddressingMode m, u8 reg, u8 bitindex) override;
+  void btst_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) override;
+  void bchg_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) override;
+  void bclr_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) override;
+  void bset_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) override;
   void movep(u8 dn, DirectionR d, Size s, u8 an, u16 displacement) override;
   void movea(Size s, u8 an, AddressingMode m, u8 xn) override;
   void move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode dst_m,
             u8 dst_xn) override;
-  void move_from_sr(AddressingMode m) override;
-  void move_to_ccr(AddressingMode m) override;
-  void move_to_sr(AddressingMode m) override;
+  void move_from_sr(AddressingMode m, u8 xn) override;
+  void move_to_ccr(AddressingMode m, u8 xn) override;
+  void move_to_sr(AddressingMode m, u8 xn) override;
   void negx(Size s, AddressingMode m, u8 xn) override;
   void clr(Size s, AddressingMode m, u8 xn) override;
   void neg(Size s, AddressingMode m, u8 xn) override;
@@ -86,8 +86,8 @@ public:
   void cmpm_(u8 an, Size s, u8 an2) override;
   void cmp_(u8 dn, Size s, AddressingMode m, u8 xn) override;
   void cmpa_(u8 an, Size s, AddressingMode m, u8 xn) override;
-  void mulu(u8 dn, AddressingMode m) override;
-  void muls(u8 dn, AddressingMode m) override;
+  void mulu(u8 dn, AddressingMode m, u8 xn) override;
+  void muls(u8 dn, AddressingMode m, u8 xn) override;
   void abcd(u8 xn, Mode m, u8 xn2) override;
   void exg(u8 rx, u8 opmode, u8 ry) override;
   void and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) override;

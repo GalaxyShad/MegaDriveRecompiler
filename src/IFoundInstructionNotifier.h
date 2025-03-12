@@ -21,17 +21,17 @@ struct IFoundInstructionNotifier {
   virtual void bchg(AddressingMode m, u8 xn, u8 bitindex) = 0;
   virtual void bclr(AddressingMode m, u8 xn, u8 bitindex) = 0;
   virtual void bset(AddressingMode m, u8 xn, u8 bitindex) = 0;
-  virtual void btst_dn(u8 dn, AddressingMode m, u8 reg, u8 bitindex) = 0;
-  virtual void bchg_dn(u8 dn, AddressingMode m, u8 reg, u8 bitindex) = 0;
-  virtual void bclr_dn(u8 dn, AddressingMode m, u8 reg, u8 bitindex) = 0;
-  virtual void bset_dn(u8 dn, AddressingMode m, u8 reg, u8 bitindex) = 0;
+  virtual void btst_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) = 0;
+  virtual void bchg_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) = 0;
+  virtual void bclr_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) = 0;
+  virtual void bset_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) = 0;
   virtual void movep(u8 dn, DirectionR d, Size s, u8 an, u16 displacement) = 0;
   virtual void movea(Size s, u8 an, AddressingMode m, u8 xn) = 0;
   virtual void move(Size s, AddressingMode src_m, u8 src_xn,
                     AddressingMode dst_m, u8 dst_xn) = 0;
-  virtual void move_from_sr(AddressingMode m) = 0;
-  virtual void move_to_ccr(AddressingMode m) = 0;
-  virtual void move_to_sr(AddressingMode m) = 0;
+  virtual void move_from_sr(AddressingMode m, u8 xn) = 0;
+  virtual void move_to_ccr(AddressingMode m, u8 xn) = 0;
+  virtual void move_to_sr(AddressingMode m, u8 xn) = 0;
   virtual void negx(Size s, AddressingMode m, u8 xn) = 0;
   virtual void clr(Size s, AddressingMode m, u8 xn) = 0;
   virtual void neg(Size s, AddressingMode m, u8 xn) = 0;
@@ -79,8 +79,8 @@ struct IFoundInstructionNotifier {
   virtual void cmpm_(u8 an, Size s, u8 an2) = 0;
   virtual void cmp_(u8 dn, Size s, AddressingMode m, u8 xn) = 0;
   virtual void cmpa_(u8 an, Size s, AddressingMode m, u8 xn) = 0;
-  virtual void mulu(u8 dn, AddressingMode m) = 0;
-  virtual void muls(u8 dn, AddressingMode m) = 0;
+  virtual void mulu(u8 dn, AddressingMode m, u8 xn) = 0;
+  virtual void muls(u8 dn, AddressingMode m, u8 xn) = 0;
   virtual void abcd(u8 xn, Mode m, u8 xn2) = 0;
   virtual void exg(u8 rx, u8 opmode, u8 ry) = 0;
   virtual void and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) = 0;

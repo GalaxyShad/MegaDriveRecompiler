@@ -84,22 +84,22 @@ void Recompiler::bclr(AddressingMode m, u8 xn, u8 bitindex) { NOT_IMPLEMENTED }
 void Recompiler::bset(AddressingMode m, u8 xn, u8 bitindex) { NOT_IMPLEMENTED }
 
 
-void Recompiler::btst_dn(u8 dn, AddressingMode m, u8 reg, u8 bitindex) {
+void Recompiler::btst_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) {
   NOT_IMPLEMENTED
 }
 
 
-void Recompiler::bchg_dn(u8 dn, AddressingMode m, u8 reg, u8 bitindex) {
+void Recompiler::bchg_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) {
   NOT_IMPLEMENTED
 }
 
 
-void Recompiler::bclr_dn(u8 dn, AddressingMode m, u8 reg, u8 bitindex) {
+void Recompiler::bclr_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) {
   NOT_IMPLEMENTED
 }
 
 
-void Recompiler::bset_dn(u8 dn, AddressingMode m, u8 reg, u8 bitindex) {
+void Recompiler::bset_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) {
   NOT_IMPLEMENTED
 }
 
@@ -124,52 +124,52 @@ void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn,
     std::string src_pre = "";
 
     switch (src_m) {
-    case AddressingMode::DataRegister: {
-      src = Code::dn(src_xn);
-      break;
-    }
-    case AddressingMode::AddressRegister: {
-      src = Code::an(src_xn);
-      break;
-    }
-    case AddressingMode::Address: {
-      src = Code::deref_adr(s, Code::an(src_xn));
-      break;
-    }
-    case AddressingMode::AddressWithPostIncrement: {
-      src = Code::deref_adr(s, Code::an(src_xn));
-      src_post = Code::incr_an(s, src_xn);
-      break;
-    }
-    case AddressingMode::AddressWithPreDecrement: {
-      src = Code::deref_adr(s, Code::an(src_xn));
-      src_pre = Code::decr_an(s, src_xn);
-      break;
-    }
-    case AddressingMode::AddressWithDisplacement:
-    case AddressingMode::AddressWithIndex: {
-      NOT_IMPLEMENTED
-    }
+      case AddressingMode::DataRegister: {
+        src = Code::dn(src_xn);
+        break;
+      }
+      case AddressingMode::AddressRegister: {
+        src = Code::an(src_xn);
+        break;
+      }
+      case AddressingMode::Address: {
+        src = Code::deref_adr(s, Code::an(src_xn));
+        break;
+      }
+      case AddressingMode::AddressWithPostIncrement: {
+        src = Code::deref_adr(s, Code::an(src_xn));
+        src_post = Code::incr_an(s, src_xn);
+        break;
+      }
+      case AddressingMode::AddressWithPreDecrement: {
+        src = Code::deref_adr(s, Code::an(src_xn));
+        src_pre = Code::decr_an(s, src_xn);
+        break;
+      }
+      case AddressingMode::AddressWithDisplacement:
+      case AddressingMode::AddressWithIndex: {
+        NOT_IMPLEMENTED
+      }
 
-    case AddressingMode::AbsWord: {
-      u16 w = src_.get_next_word();
-      src = Code::imm(w);
-      break;
-    }
-    case AddressingMode::AbsLong: {
-      u32 l = src_.get_next_long();
-      src = Code::imm(l);
-      break;
-    }
-    case AddressingMode::Immediate: {
-      u32 data = src_.get_next_by_size(s);
-      src = Code::imm(data);
-      break;
-    }
-    case AddressingMode::PcWithDisplacement:
-    case AddressingMode::PcWithIndex: {
-      NOT_IMPLEMENTED
-    }
+      case AddressingMode::AbsWord: {
+        u16 w = src_.get_next_word();
+        src = Code::imm(w);
+        break;
+      }
+      case AddressingMode::AbsLong: {
+        u32 l = src_.get_next_long();
+        src = Code::imm(l);
+        break;
+      }
+      case AddressingMode::Immediate: {
+        u32 data = src_.get_next_by_size(s);
+        src = Code::imm(data);
+        break;
+      }
+      case AddressingMode::PcWithDisplacement:
+      case AddressingMode::PcWithIndex: {
+        NOT_IMPLEMENTED
+      }
     }
 
     switch (dst_m) {
@@ -220,13 +220,13 @@ void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn,
 }
 
 
-void Recompiler::move_from_sr(AddressingMode m) { NOT_IMPLEMENTED }
+void Recompiler::move_from_sr(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::move_to_ccr(AddressingMode m) { NOT_IMPLEMENTED }
+void Recompiler::move_to_ccr(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::move_to_sr(AddressingMode m) { NOT_IMPLEMENTED }
+void Recompiler::move_to_sr(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
 void Recompiler::negx(Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
@@ -351,14 +351,12 @@ void Recompiler::lea(u8 an, AddressingMode m, u8 xn) {
       src = Code::an(xn);
       break;
     }
-
     case AddressingMode::AddressWithDisplacement: {
       NOT_IMPLEMENTED
     }
     case AddressingMode::AddressWithIndex: {
       NOT_IMPLEMENTED
     }
-
     case AddressingMode::AbsWord: {
       u16 w = src_.get_next_word();
       src = Code::imm_adr(w);
@@ -369,7 +367,6 @@ void Recompiler::lea(u8 an, AddressingMode m, u8 xn) {
       src = Code::imm_adr(l);
       break;
     }
-
     case AddressingMode::PcWithDisplacement: {
       NOT_IMPLEMENTED
       break;
@@ -381,7 +378,6 @@ void Recompiler::lea(u8 an, AddressingMode m, u8 xn) {
   }
 
   std::string dst = Code::set_an(an, src);
-
   flow_.ctx().writeln(dst);
 }
 
@@ -396,47 +392,45 @@ void Recompiler::addq(u8 data, Size s, AddressingMode m, u8 xn) {
 
 void Recompiler::subq(u8 data, Size s, AddressingMode m, u8 xn) {
   if (data == 0) data = 8;
-
   std::string res;
 
   switch (m) {
-
-  case AddressingMode::DataRegister: {
-    res = std::format("{} -= {};", Code::dn(xn), data);
-    break;
-  }
-  case AddressingMode::AddressRegister: {
-    res = std::format("{} -= {};", Code::an(xn), data);
-    break;
-  }
-  case AddressingMode::Address: {
-    res = Code::set_adr(s, Code::an(xn), std::format("{} - {}", Code::deref_adr(s, Code::an(xn)), data));
-    break;
-  }
-  case AddressingMode::AddressWithPostIncrement: {
-    res = Code::set_adr(s, Code::an(xn), std::format("{} - {}", Code::deref_adr(s, Code::an(xn)), data));
-    res += Code::incr_an(s, xn);
-    break;
-  }
-  case AddressingMode::AddressWithPreDecrement: {
-    res = Code::decr_an(s, xn);
-    res += Code::set_adr(s, Code::an(xn), std::format("{} - {}", Code::deref_adr(s, Code::an(xn)), data));
-    break;
-  }
-  case AddressingMode::AddressWithDisplacement: 
-  case AddressingMode::AddressWithIndex: {
-    NOT_IMPLEMENTED
-  }
-  case AddressingMode::AbsWord: {
-    u16 w = src_.get_next_word();
-    res = Code::set_adr(s, Code::imm_adr(w), std::format("{} - {}", Code::deref_adr(s, Code::imm_adr(w)), data));
-    break;
-  }
-  case AddressingMode::AbsLong: {
-    u32 l = src_.get_next_long();
-    res = Code::set_adr(s, Code::imm_adr(l), std::format("{} - {}", Code::deref_adr(s, Code::imm_adr(l)), data));
-    break;
-  }
+    case AddressingMode::DataRegister: {
+      res = std::format("{} -= {};", Code::dn(xn), data);
+      break;
+    }
+    case AddressingMode::AddressRegister: {
+      res = std::format("{} -= {};", Code::an(xn), data);
+      break;
+    }
+    case AddressingMode::Address: {
+      res = Code::set_adr(s, Code::an(xn), std::format("{} - {}", Code::deref_adr(s, Code::an(xn)), data));
+      break;
+    }
+    case AddressingMode::AddressWithPostIncrement: {
+      res = Code::set_adr(s, Code::an(xn), std::format("{} - {}", Code::deref_adr(s, Code::an(xn)), data));
+      res += Code::incr_an(s, xn);
+      break;
+    }
+    case AddressingMode::AddressWithPreDecrement: {
+      res = Code::decr_an(s, xn);
+      res += Code::set_adr(s, Code::an(xn), std::format("{} - {}", Code::deref_adr(s, Code::an(xn)), data));
+      break;
+    }
+    case AddressingMode::AddressWithDisplacement: 
+    case AddressingMode::AddressWithIndex: {
+      NOT_IMPLEMENTED
+    }
+    case AddressingMode::AbsWord: {
+      u16 w = src_.get_next_word();
+      res = Code::set_adr(s, Code::imm_adr(w), std::format("{} - {}", Code::deref_adr(s, Code::imm_adr(w)), data));
+      break;
+    }
+    case AddressingMode::AbsLong: {
+      u32 l = src_.get_next_long();
+      res = Code::set_adr(s, Code::imm_adr(l), std::format("{} - {}", Code::deref_adr(s, Code::imm_adr(l)), data));
+      break;
+    }
   }
 
   flow_.ctx().writeln(res);
@@ -586,10 +580,10 @@ void Recompiler::cmpa_(u8 an, Size s, AddressingMode m, u8 xn) {
 }
 
 
-void Recompiler::mulu(u8 dn, AddressingMode m) { NOT_IMPLEMENTED }
+void Recompiler::mulu(u8 dn, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::muls(u8 dn, AddressingMode m) { NOT_IMPLEMENTED }
+void Recompiler::muls(u8 dn, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
 void Recompiler::abcd(u8 xn, Mode m, u8 xn2) { NOT_IMPLEMENTED }
@@ -671,8 +665,7 @@ void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {///
 
   if(d == RotationDirection::Left){
     flow_.ctx().writeln(pre + std::format("{} <<= 1;", src) + post);
-  }
-  else{
+  } else{
     flow_.ctx().writeln(pre + std::format("{} >>= 1;", src) + post);
   }
 }
@@ -703,10 +696,11 @@ void Recompiler::lsd_rotation(u8 rotation, RotationDirection d, Size s,
       break;
     }
     case Rotation::Register:{
-      if(s == Size::Long)
+      if(s == Size::Long){
         count_shift = std::format("{}", Code::dn(rotation));
-      else
+      } else {
         count_shift = std::format("({} % 64)", Code::dn(rotation));
+      }
       break;
     }
   }
