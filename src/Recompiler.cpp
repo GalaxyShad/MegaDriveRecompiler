@@ -643,8 +643,28 @@ void Recompiler::asd_rotation(u8 rotation, RotationDirection d, Size s,
 
 
 void Recompiler::lsd_rotation(u8 rotation, RotationDirection d, Size s,
-                              Rotation m, u8 dn) {
-  NOT_IMPLEMENTED
+                              Rotation m, u8 dn) {///
+  std::string count_shift;
+  switch (m) {
+    case Rotation::Immediate: {
+      count_shift = std::format("{}", rotation);
+      break;
+    }
+    case Rotation::Register:{
+      if(s == Size::Long)
+        count_shift = std::format("{}", Code::dn(rotation));
+      else
+        count_shift = std::format("({} % 64)", Code::dn(rotation));
+      break;
+    }
+  }
+
+  if(d ==RotationDirection::Left){
+    flow_.ctx().writeln(std::format("{} <<= {};", Code::dn(dn), count_shift));
+  }
+  else{
+    flow_.ctx().writeln(std::format("{} >>= {};", Code::dn(dn), count_shift));
+  }
 }
 
 
