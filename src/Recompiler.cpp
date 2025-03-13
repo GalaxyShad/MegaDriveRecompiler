@@ -277,13 +277,18 @@ void Recompiler::neg(Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 void Recompiler::not_(Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::ext(Size s, u8 dn) { NOT_IMPLEMENTED }
+void Recompiler::ext(Size s, u8 dn) { ///
+  // NOT_IMPLEMENTED
+  flow_.ctx().writeln(std::format("{} = (0xFFFF{} * ({} >> (sizeof({}) * 8 - 1))) - (((sizeof({}) * 8) << 1) - 1) | {};", Code::dn(dn), s == Size::Byte ? "" : "FFFF", Code::dn(dn), Code::get_sizeof_size(s), Code::get_sizeof_size(s), Code::dn(dn)));
+}
 
 
 void Recompiler::nbcd(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::swap(u8 dn) { NOT_IMPLEMENTED }
+void Recompiler::swap(u8 dn) { ///
+  flow_.ctx().writeln(std::format("{} = (({} & 0xFFFF) << 16) | (({} >> 16) & 0xFFFF);", Code::dn(dn), Code::dn(dn), Code::dn(dn)));
+}
 
 
 void Recompiler::pea(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
@@ -468,65 +473,64 @@ void Recompiler::bsr(u16 displacement) {
 void Recompiler::bcc(Condition c, u16 displacement) { 
   NOT_IMPLEMENTED 
 
-  // switch (condition) {
-  //   case 0b0000:
+  // std::string cond;
+  // switch (c) {
+  //   case Condition::True:
   //     cond = "(ctx->res)";
   //     break;
-  //   case 0b0001:
+  //   case Condition::False:
   //     cond = "(!ctx->res)";
   //     break;
-  //   case 0b0010:
+  //   case Condition::Higher:
   //     cond = "(ctx->res > 0)";
   //     break;
-  //   case 0b0011:
+  //   case Condition::LowerOrSame:
   //     cond = "(ctx->res <= 0)";
   //     break;
-  //   case 0b0100:
-  //     not_implemented();
+  //   case Condition::CarryClear:
+  //     NOT_IMPLEMENTED
   //     break;
-  //   case 0b0101:
-  //     not_implemented();
+  //   case Condition::CarrySet:
+  //     NOT_IMPLEMENTED
   //     break;
-  //   case 0b0110:
+  //   case Condition::NotEqual:
   //     cond = "(ctx->res != 1)";
   //     break;
-  //   case 0b0111:
+  //   case Condition::Equal:
   //     cond = "(ctx->res == 1)";
   //     break;
-  //   case 0b1000:
-  //     not_implemented();
+  //   case Condition::OverflowClear:
+  //     NOT_IMPLEMENTED
   //     break;
-  //   case 0b1001:
-  //     not_implemented();
+  //   case Condition::OverflowSet:
+  //     NOT_IMPLEMENTED
   //     break;
-  //   case 0b1010:
+  //   case Condition::Plus:
   //     cond = "(ctx->res > 0)";
   //     break;
-  //   case 0b1011:
+  //   case Condition::Minus:
   //     cond = "(ctx->res < 0)";
   //     break;
-  //   case 0b1100:
+  //   case Condition::GreaterOrEqual:
   //     cond = "(ctx->res >= 0)";
   //     break;
-  //   case 0b1101:
+  //   case Condition::LessThan:
   //     cond = "(ctx->res < 0)";
   //     break;
-  //   case 0b1110:
+  //   case Condition::GreaterThan:
   //     cond = "(ctx->res > 0)";
   //     break;
-  //   case 0b1111:
+  //   case Condition::LessOrEqual:
   //     cond = "(ctx->res <= 0)";
   //     break;
-  //   }
-
-  //   program_[routine].writeln("if " + cond);
-
-  //   if (displacement == 0) {
-  //     i16 im = src_.get_next_word();
-  //     function_call(pc_ + im);
-  //   } else {
-  //     function_call(pc_ + displacement);
-  //   }  
+  // }
+  
+  // if (displacement == 0) {
+  //   i16 im = src_.get_next_word();
+  //   call_function(im, std::format("if {} ", cond));
+  // } else {
+  //   call_function(displacement, std::format("if {} ", cond));
+  // }  
 }
 
 
@@ -616,8 +620,6 @@ void Recompiler::asd(RotationDirection d, AddressingMode m, u8 xn) {
 
 
 void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {///
-  // NOT_IMPLEMENTED
-
   std::string src = "";
   std::string post = "";
   std::string pre = "";
@@ -676,8 +678,57 @@ void Recompiler::rox(RotationDirection d, AddressingMode m, u8 xn) {
 }
 
 
-void Recompiler::rod(RotationDirection d, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
+void Recompiler::rod(RotationDirection d, AddressingMode m, u8 xn) { ///
+  std::string src = "";
+  std::string post = "";
+  std::string pre = "";
+
+  switch (m) {
+    case AddressingMode::Address: {
+      src = Code::an(xn);
+      break;
+    }
+    case AddressingMode::AddressWithPostIncrement: {
+      NOT_IMPLEMENTED
+      // src = Code::an(xn);
+      // post = Code::incr_an(s, xn);
+      break;
+    }
+    case AddressingMode::AddressWithPreDecrement: {
+      NOT_IMPLEMENTED
+      // src = Code::an(xn);
+      // pre = Code::decr_an(s, xn);
+      break;
+    }
+    case AddressingMode::AddressWithDisplacement:
+    case AddressingMode::AddressWithIndex: {
+      NOT_IMPLEMENTED
+    }
+
+    case AddressingMode::AbsWord: {
+      u16 w = src_.get_next_word();
+      src = Code::imm(w);
+      break;
+    }
+    case AddressingMode::AbsLong: {
+      u32 l = src_.get_next_long();
+      src = Code::imm(l);
+      break;
+    }
+
+    case AddressingMode::DataRegister:
+    case AddressingMode::AddressRegister:
+    case AddressingMode::Immediate:
+    case AddressingMode::PcWithDisplacement:
+    case AddressingMode::PcWithIndex:
+    default: { throw ("Fatal Error"); }
+  }
+  
+  if(d == RotationDirection::Left){
+    flow_.ctx().writeln(pre + std::format("{} = ({} << {}) | ({} >> (sizeof({}) * 8 - {}));", src, src, 1, src, Code::get_sizeof_size(Size::Word), 1) + post);
+  } else{
+    flow_.ctx().writeln(pre + std::format("{} = ({} >> {}) | ({} << (sizeof({}) * 8 - {}));", src, src, 1, src, Code::get_sizeof_size(Size::Word), 1) + post);
+  }
 }
 
 
@@ -721,8 +772,28 @@ void Recompiler::rox_rotation(u8 rotation, RotationDirection d, Size s,
 
 
 void Recompiler::rod_rotation(u8 rotation, RotationDirection d, Size s,
-                              Rotation m, u8 dn) {
-  NOT_IMPLEMENTED
+                              Rotation m, u8 dn) { ///
+  std::string count_shift;
+  switch (m) {
+    case Rotation::Immediate: {
+      count_shift = std::format("{}", rotation ? rotation : 8);
+      break;
+    }
+    case Rotation::Register:{
+      if(s == Size::Long){
+        count_shift = std::format("{}", Code::dn(rotation));
+      } else {
+        count_shift = std::format("({} % 64)", Code::dn(rotation));
+      }
+      break;
+    }
+  }
+  
+  if(d == RotationDirection::Left){
+    flow_.ctx().writeln(std::format("{} = ({} << {}) | ({} >> (sizeof({}) * 8 - {}));", Code::dn(dn), Code::dn(dn), count_shift, Code::dn(dn), Code::get_sizeof_size(s), count_shift));
+  } else{
+    flow_.ctx().writeln(std::format("{} = ({} >> {}) | ({} << (sizeof({}) * 8 - {}));", Code::dn(dn), Code::dn(dn), count_shift, Code::dn(dn), Code::get_sizeof_size(s), count_shift));
+  }
 }
 
 void Recompiler::call_function(u32 dst_adr, std::string pre) {
