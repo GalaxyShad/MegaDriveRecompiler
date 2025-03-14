@@ -15,6 +15,8 @@ typedef signed int    i32;
 #define DEREF_ADR_U16(X) 0
 #define DEREF_ADR_U32(X) 0
 
+#define COMPARE(X, Y) 0
+
 typedef struct Context {
     i32 d0, d1, d2, d3, d4, d5, d6, d7;
     u8 *a0, *a1, *a2, *a3, *a4, *a5, *a6, *a7;

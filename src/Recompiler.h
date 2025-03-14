@@ -109,7 +109,7 @@ public:
                     u8 dn) override;
 
 private:
-  void call_function(u32 dst_adr, std::string pre = "");
+  void call_function(u32 dst_adr, std::string pre = "", std::string post = "");
 
   SourceBinary& src_;
   RecompilerFlow flow_;

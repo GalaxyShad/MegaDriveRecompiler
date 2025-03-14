@@ -1,4 +1,5 @@
 #include "Disassembler.h"
+#include "enums.h"
 #include "ident.h"
 
 void Disassembler::disassemble() {
@@ -74,7 +75,10 @@ void Disassembler::disassemble() {
     u8 m = (op >> 3) & 0b111;
     u8 xn = (op >> 0) & 0b111;
     auto size = ident::ident_size(s);
-    n_->cmpi(size, ident::ident_effective_adr(m, xn), xn, src_.get_next_by_size(size));
+    n_->cmpi(size, ident::ident_effective_adr(m, xn), xn, 
+    src_.get_next_by_size(
+      size == Size::Byte ? Size::Word : size // O-o
+    ));
   } else if ((op & 0b1111111111000000) == 0b0000100000000000) {
     // BTST
     u8 m = (op >> 3) & 0b111;
@@ -337,8 +341,12 @@ void Disassembler::disassemble() {
   } else if ((op & 0b1111111100000000) == 0b0110000000000000) {
     // BRA
     u8 displacement = (op >> 0) & 0b11111111;
-    u16 im = src_.get_next_word();
-    n_->bra(displacement);
+    if (displacement == 0) {
+      u16 im = src_.get_next_word();
+      n_->bsr(im);    
+    } else {
+      n_->bsr(displacement);  
+    }
   } else if ((op & 0b1111111100000000) == 0b0110000100000000) {
     // BSR
     u8 displacement = (op >> 0) & 0b11111111;

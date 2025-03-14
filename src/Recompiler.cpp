@@ -33,7 +33,27 @@ void Recompiler::andi_to_sr(u16 data) { NOT_IMPLEMENTED }
 
 
 void Recompiler::andi(Size s, AddressingMode m, u8 xn, u32 data) {
-  NOT_IMPLEMENTED
+  std::string res;
+  
+  switch (m) {
+
+  case AddressingMode::DataRegister: {
+    res = std::format("{} &= {:X};", Code::dn(xn), data);
+    break;
+  };
+
+  case AddressingMode::Address:
+  case AddressingMode::AddressWithPostIncrement:
+  case AddressingMode::AddressWithPreDecrement:
+  case AddressingMode::AddressWithDisplacement:
+  case AddressingMode::AddressWithIndex:
+  case AddressingMode::AbsWord:
+  case AddressingMode::AbsLong: 
+    NOT_IMPLEMENTED
+    break;
+  }
+
+  flow_.ctx().writeln(res);
 }
 
 
@@ -59,7 +79,36 @@ void Recompiler::eori(Size s, AddressingMode m, u8 xn, u32 data) {
 
 
 void Recompiler::cmpi(Size s, AddressingMode m, u8 xn, u32 data) {
+  std::string res;
+
+  switch (m) {
+  case AddressingMode::DataRegister: {
+    res = std::format("ctx->res = COMPARE({}, {:X});", Code::dn(xn), data);
+    break;
+  }
+  case AddressingMode::Address: {
+    res = std::format("ctx->res = COMPARE({}, {:X});", Code::deref_adr(s, Code::an(xn)), data);
+    break;
+  }
+  case AddressingMode::AddressWithPostIncrement:
+  case AddressingMode::AddressWithPreDecrement:
+  case AddressingMode::AddressWithDisplacement:
+  case AddressingMode::AddressWithIndex:
   NOT_IMPLEMENTED
+  break;
+  case AddressingMode::AbsWord: {
+    u16 w = src_.get_next_word();
+    res = std::format("ctx->res = COMPARE({}, {:X});", Code::deref_adr(s, Code::imm_adr(w)), data);
+    break;
+  }
+  case AddressingMode::AbsLong: {
+    u32 l = src_.get_next_long();
+    res = std::format("ctx->res = COMPARE({}, {:X});", Code::deref_adr(s, Code::imm_adr(l)), data);
+    break;
+  }
+  }
+
+  flow_.ctx().writeln(res);
 }
 
 
@@ -162,9 +211,14 @@ void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn,
         src_pre = Code::decr_an(s, src_xn);
         break;
       }
-      case AddressingMode::AddressWithDisplacement:
-      case AddressingMode::AddressWithIndex: {
+      case AddressingMode::AddressWithDisplacement: {
         NOT_IMPLEMENTED
+        break;
+      }
+      case AddressingMode::AddressWithIndex: {
+        i16 index = src_.get_next_word();
+        src = Code::deref_adr(s, std::format("{} + {} + {}", Code::an(src_xn), Code::dn(src_xn), index));
+        break;
       }
 
       case AddressingMode::AbsWord: {
@@ -182,9 +236,13 @@ void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn,
         src = Code::imm(data);
         break;
       }
-      case AddressingMode::PcWithDisplacement:
-      case AddressingMode::PcWithIndex: {
+      case AddressingMode::PcWithDisplacement: {
         NOT_IMPLEMENTED
+      }
+      case AddressingMode::PcWithIndex: {
+        i16 disp = src_.get_next_word();
+        src = Code::deref_adr(s, std::format("{} + {}", Code::imm_adr(src_.get_pc() + disp - 2), Code::dn(dst_xn)));
+        break;
       }
     }
 
@@ -331,7 +389,34 @@ void Recompiler::illegal() { NOT_IMPLEMENTED }
 void Recompiler::tas(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::tst(Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::tst(Size s, AddressingMode m, u8 xn) { 
+  std::string res;
+  
+  switch (m) {
+  case AddressingMode::DataRegister: {
+    res = std::format("ctx->res = {};", Code::dn(xn));
+    break;
+  }
+  case AddressingMode::Address:
+  case AddressingMode::AddressWithPostIncrement:
+  case AddressingMode::AddressWithPreDecrement:
+  case AddressingMode::AddressWithDisplacement:
+  case AddressingMode::AddressWithIndex: 
+    NOT_IMPLEMENTED
+  case AddressingMode::AbsWord: {
+    u16 w = src_.get_next_word();
+    res = std::format("ctx->res = {};", Code::deref_adr(s, Code::imm_adr(w)));
+    break;
+  }
+  case AddressingMode::AbsLong: {
+    u16 l = src_.get_next_long();
+    res = std::format("ctx->res = {};", Code::deref_adr(s, Code::imm_adr(l)));
+    break;
+  }
+  }
+
+  flow_.ctx().writeln(res);
+}
 
 
 void Recompiler::trap(u8 vector) { NOT_IMPLEMENTED }
@@ -424,7 +509,32 @@ void Recompiler::chk(u8 dn, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
 void Recompiler::addq(u8 data, Size s, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
+  if (data == 0) data = 8;
+
+  std::string res;
+
+  switch (m) {
+
+  case AddressingMode::DataRegister: {
+    res = std::format("{} += {:X};", Code::dn(xn), data);
+    break;
+  }
+  case AddressingMode::AddressRegister: {
+    res = std::format("{} += {:X};", Code::an(xn), data);
+    break;
+  }
+  case AddressingMode::Address:
+  case AddressingMode::AddressWithPostIncrement:
+  case AddressingMode::AddressWithPreDecrement:
+  case AddressingMode::AddressWithDisplacement:
+  case AddressingMode::AddressWithIndex:
+  case AddressingMode::AbsWord:
+  case AddressingMode::AbsLong:
+    NOT_IMPLEMENTED
+    break;
+  }
+
+  flow_.ctx().writeln(res);
 }
 
 
@@ -492,7 +602,12 @@ void Recompiler::dbcc(Condition c, u8 dn, u16 displacement) {
 }
 
 
-void Recompiler::bra(u16 displacement) { NOT_IMPLEMENTED }
+void Recompiler::bra(u16 displacement) { 
+  i16 d = displacement;
+  u32 dst = src_.get_pc() + d - 2;
+
+  call_function(dst, "", " return;");
+}
 
 
 void Recompiler::bsr(u16 displacement) { 
@@ -530,7 +645,7 @@ void Recompiler::bcc(Condition c, u16 displacement) {
 
   u32 dst_adr = src_.get_pc() + displ;
 
-  call_function(dst_adr, std::format("if ({}) ", cond));
+  call_function(dst_adr, std::format("if ({}) ", cond), " return;");
 }
 
 
@@ -796,10 +911,10 @@ void Recompiler::rod_rotation(u8 rotation, RotationDirection d, Size s,
   }
 }
 
-void Recompiler::call_function(u32 dst_adr, std::string pre) {
+void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post) {
   auto fn_name = flow_.get_name_for_label(dst_adr);
 
-  flow_.ctx().writeln(pre + Code::call_function(fn_name));
+  flow_.ctx().writeln(pre + Code::call_function(fn_name) + post);
 
   if (flow_.ctx().adr == dst_adr) {
     flow_.ret();
