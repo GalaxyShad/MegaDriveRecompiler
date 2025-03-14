@@ -50,6 +50,7 @@ public:
   }
 
   void jmp(u32 adr) {
+    ctx().last_pc = src_.get_pc();
     stack_.push(&program_[adr]);
     routine_ = adr;
     src_.set_pc(adr);

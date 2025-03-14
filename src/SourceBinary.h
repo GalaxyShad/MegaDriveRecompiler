@@ -3,6 +3,7 @@
 
 #include "enums.h"
 #include "tinyint.h"
+#include <format>
 #include <fstream>
 #include <stdexcept>
 

@@ -35,25 +35,24 @@ namespace ident {
 
   Condition ident_effective_Condition(u8 c) {
     switch (c) {
-    
-    case 0b0000: return Condition::True;
-    case 0b0001: return Condition::False;
-    case 0b0010: return Condition::Higher;
-    case 0b0011: return Condition::LowerOrSame;
-    case 0b0100: return Condition::CarryClear;
-    case 0b0101: return Condition::CarrySet;
-    case 0b0110: return Condition::NotEqual;
-    case 0b0111: return Condition::Equal;
-    case 0b1000: return Condition::OverflowClear;
-    case 0b1001: return Condition::OverflowSet;
-    case 0b1010: return Condition::Plus;
-    case 0b1011: return Condition::Minus;
-    case 0b1100: return Condition::GreaterOrEqual;
-    case 0b1101: return Condition::LessThan;
-    case 0b1110: return Condition::GreaterThan;
-    case 0b1111: return Condition::LessOrEqual;
+      case 0b0000: return Condition::True;
+      case 0b0001: return Condition::False;
+      case 0b0010: return Condition::Higher;
+      case 0b0011: return Condition::LowerOrSame;
+      case 0b0100: return Condition::CarryClear;
+      case 0b0101: return Condition::CarrySet;
+      case 0b0110: return Condition::NotEqual;
+      case 0b0111: return Condition::Equal;
+      case 0b1000: return Condition::OverflowClear;
+      case 0b1001: return Condition::OverflowSet;
+      case 0b1010: return Condition::Plus;
+      case 0b1011: return Condition::Minus;
+      case 0b1100: return Condition::GreaterOrEqual;
+      case 0b1101: return Condition::LessThan;
+      case 0b1110: return Condition::GreaterThan;
+      case 0b1111: return Condition::LessOrEqual;
 
-    default:  throw std::invalid_argument("bad argument Condition");
+      default:  throw std::invalid_argument("bad argument Condition");
     }
   }
 
@@ -127,7 +126,6 @@ namespace ident {
   }
 
   // clang-format on
-
 }
 
 #endif // __CLIONPROJECTS_M68K_DISASSEMBLER_SRC_IDENT_H_

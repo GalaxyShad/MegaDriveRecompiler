@@ -55,8 +55,6 @@ public:
         return std::format("ctx->a{} -= sizeof({}); ", reg, get_sizeof_size(size));
     }
 
-
-private:
     static std::string get_sizeof_size(Size size) {
         switch (size) {
         case Size::Byte: return "u8"; 
@@ -64,6 +62,8 @@ private:
         case Size::Long: return "u32"; 
         }
     }
+
+private:
 
     static std::string get_macro_size(Size size) {
         switch (size) {
