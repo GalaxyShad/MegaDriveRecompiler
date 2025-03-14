@@ -64,14 +64,30 @@ void Recompiler::cmpi(Size s, AddressingMode m, u8 xn, u32 data) {
 
 
 void Recompiler::btst(AddressingMode m, u8 xn, u8 bitindex) { 
-  NOT_IMPLEMENTED 
 
-  // if (m == 0b000) {
-  //     program_[routine].writeln(
-  //         std::format("ctx->res = (ctx->d{} & {:X}) != 0;", xn, 1 << im));
-  //   } else {
-  //     not_implemented();
-  //   }
+  std::string res;
+
+  switch (m) {
+
+  case AddressingMode::DataRegister: {
+    res = std::format("ctx->res = ({} & {:X}) != 0;", Code::dn(xn), 1 << bitindex);
+    break;
+  }
+  case AddressingMode::Address:
+  case AddressingMode::AddressWithPostIncrement:
+  case AddressingMode::AddressWithPreDecrement:
+  case AddressingMode::AddressWithDisplacement:
+  case AddressingMode::AddressWithIndex:
+  case AddressingMode::AbsWord:
+  case AddressingMode::AbsLong:
+  case AddressingMode::PcWithDisplacement:
+  case AddressingMode::PcWithIndex: {
+    NOT_IMPLEMENTED
+  }
+
+  }
+
+  flow_.ctx().writeln(res);
 }
 
 
@@ -220,13 +236,22 @@ void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn,
 }
 
 
-void Recompiler::move_from_sr(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::move_from_sr(AddressingMode m, u8 xn) { 
+  // TODO
+  flow_.ctx().writeln(std::format("// {} at {:X}", __func__, src_.get_pc()));
+}
 
 
-void Recompiler::move_to_ccr(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::move_to_ccr(AddressingMode m, u8 xn) { 
+  // TODO 
+  flow_.ctx().writeln(std::format("// {} at {:X}", __func__, src_.get_pc()));
+}
 
 
-void Recompiler::move_to_sr(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::move_to_sr(AddressingMode m, u8 xn) { 
+  // TODO
+  flow_.ctx().writeln(std::format("// {} at {:X}", __func__, src_.get_pc()));
+}
 
 
 void Recompiler::negx(Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
@@ -333,7 +358,9 @@ void Recompiler::stop(u16 word) { NOT_IMPLEMENTED }
 void Recompiler::rte() { NOT_IMPLEMENTED }
 
 
-void Recompiler::rts() { NOT_IMPLEMENTED }
+void Recompiler::rts() { 
+  flow_.ret();
+}
 
 
 void Recompiler::trapv() { NOT_IMPLEMENTED }
@@ -477,66 +504,33 @@ void Recompiler::bsr(u16 displacement) {
 
 
 void Recompiler::bcc(Condition c, u16 displacement) { 
-  NOT_IMPLEMENTED 
 
-  // std::string cond;
-  // switch (c) {
-  //   case Condition::True:
-  //     cond = "(ctx->res)";
-  //     break;
-  //   case Condition::False:
-  //     cond = "(!ctx->res)";
-  //     break;
-  //   case Condition::Higher:
-  //     cond = "(ctx->res > 0)";
-  //     break;
-  //   case Condition::LowerOrSame:
-  //     cond = "(ctx->res <= 0)";
-  //     break;
-  //   case Condition::CarryClear:
-  //     NOT_IMPLEMENTED
-  //     break;
-  //   case Condition::CarrySet:
-  //     NOT_IMPLEMENTED
-  //     break;
-  //   case Condition::NotEqual:
-  //     cond = "(ctx->res != 1)";
-  //     break;
-  //   case Condition::Equal:
-  //     cond = "(ctx->res == 1)";
-  //     break;
-  //   case Condition::OverflowClear:
-  //     NOT_IMPLEMENTED
-  //     break;
-  //   case Condition::OverflowSet:
-  //     NOT_IMPLEMENTED
-  //     break;
-  //   case Condition::Plus:
-  //     cond = "(ctx->res > 0)";
-  //     break;
-  //   case Condition::Minus:
-  //     cond = "(ctx->res < 0)";
-  //     break;
-  //   case Condition::GreaterOrEqual:
-  //     cond = "(ctx->res >= 0)";
-  //     break;
-  //   case Condition::LessThan:
-  //     cond = "(ctx->res < 0)";
-  //     break;
-  //   case Condition::GreaterThan:
-  //     cond = "(ctx->res > 0)";
-  //     break;
-  //   case Condition::LessOrEqual:
-  //     cond = "(ctx->res <= 0)";
-  //     break;
-  // }
-  
-  // if (displacement == 0) {
-  //   i16 im = src_.get_next_word();
-  //   call_function(im, std::format("if {} ", cond));
-  // } else {
-  //   call_function(displacement, std::format("if {} ", cond));
-  // }  
+  std::string cond;
+
+  switch (c) {
+  case Condition::True: cond  = "1"; break;
+  case Condition::False: cond = "0"; break;
+  case Condition::Higher: cond = "ctx->res > 0"; break;
+  case Condition::LowerOrSame: cond = "ctx->res <= 0"; break;
+  case Condition::CarryClear: 
+  case Condition::CarrySet: cond = "1 /* CC CS */"; break; // TODO
+  case Condition::NotEqual: cond = "!ctx->res"; break;
+  case Condition::Equal: cond = "ctx->res"; break;
+  case Condition::OverflowClear: 
+  case Condition::OverflowSet: NOT_IMPLEMENTED break;
+  case Condition::Plus: cond = "ctx->res > 0"; break;
+  case Condition::Minus: cond = "ctx->res < 0"; break;
+  case Condition::GreaterOrEqual: cond = "ctx->res >= 0"; break;
+  case Condition::LessThan: cond = "ctx->res < 0"; break;
+  case Condition::GreaterThan: cond = "ctx->res > 0"; break;
+  case Condition::LessOrEqual: cond = "ctx->res <= 0"; break;
+  }
+
+  i16 displ = (displacement == 0) ? src_.get_next_word() : displacement;
+
+  u32 dst_adr = src_.get_pc() + displ;
+
+  call_function(dst_adr, std::format("if ({}) ", cond));
 }
 
 
