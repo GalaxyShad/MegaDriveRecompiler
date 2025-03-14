@@ -11,7 +11,7 @@ public:
     void write_to_file() {
         std::ofstream out("recompiled/recompiled.c");
 
-        out << "#include <context.h>\n\n";
+        out << "#include \"context.h\"\n\n";
 
         for (const auto &pair : flow_.program()) {
         out << "void " << pair.second.name << "(Context* ctx);\n";

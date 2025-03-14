@@ -233,41 +233,47 @@ void Recompiler::negx(Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
 void Recompiler::clr(Size s, AddressingMode m, u8 xn) { 
-  NOT_IMPLEMENTED 
 
-  // std::string macro_type = (s == 0b00) ? "U8" : (s == 0b01) ? "U16" : "U32";
-  //   std::string type = (s == 0b00) ? "u8" : (s == 0b01) ? "u16" : "u32";
+  std::string res, pre, post;
 
-  //   if (m == 0b000) {
-  //     program_[routine].writeln(std::format("ctx->d{} = 0;", xn));
-  //   } else if (m == 0b010) {
-  //     program_[routine].writeln(
-  //         std::format("MOVE_TO_ADR_{}(ctx->a{}, 0);", macro_type, xn));
-  //   } else if (m == 0b011) {
-  //     program_[routine].writeln(
-  //         std::format("MOVE_TO_ADR_{}(ctx->a{}, 0); ctx->a{} += sizeof({});",
-  //                     macro_type, xn, xn, type));
-  //   } else if (m == 0b100) {
-  //     program_[routine].writeln(
-  //         std::format("ctx->a{} -= sizeof({}); MOVE_TO_ADR_{}(ctx->a{}, 0);",
-  //                     xn, type, macro_type, xn));
-  //   } else if (m == 0b101) {
-  //     i16 d16 = src_.get_next_word();
-  //     program_[routine].writeln(std::format("MOVE_TO_ADR_{}(ctx->a{} + {}, 0);",
-  //                                           macro_type, xn, d16));
-  //   } else if (m == 0b110) {
-  //     i8 d8 = src_.get_next_byte();
-  //     program_[routine].writeln(std::format(
-  //         "MOVE_TO_ADR_{}(ctx->a{} + {} + {}, 0);", macro_type, xn, d8, xn));
-  //   } else if (m == 0b111 && xn == 0b000) {
-  //     u16 w = src_.get_next_word();
-  //     program_[routine].writeln(
-  //         std::format("MOVE_TO_ADR_{}(ctx->mem + {:X}, 0);", macro_type, w));
-  //   } else if (m == 0b111 && xn == 0b001) {
-  //     u32 l = src_.get_next_long();
-  //     program_[routine].writeln(
-  //         std::format("MOVE_TO_ADR_{}(ctx->mem + {:X}, 0);", macro_type, l));
-  //   }  
+  switch (m) {
+
+  case AddressingMode::DataRegister: {
+    res = Code::set_dn(xn, "0");
+    break;
+  }
+
+  case AddressingMode::Address: {
+    res = Code::set_adr(s, Code::an(xn), "0");
+    break;
+  }
+  case AddressingMode::AddressWithPostIncrement: {
+    res = Code::set_adr(s, Code::an(xn), "0");
+    post = Code::incr_an(s, xn);
+    break;
+  }
+  case AddressingMode::AddressWithPreDecrement: {
+    pre = Code::decr_an(s, xn);
+    res = Code::set_adr(s, Code::an(xn), "0");
+    break;
+  }
+  case AddressingMode::AddressWithDisplacement:
+  case AddressingMode::AddressWithIndex: {
+    NOT_IMPLEMENTED
+  }
+  case AddressingMode::AbsWord: {
+    u16 w = src_.get_next_word();
+    res = Code::set_adr(s, Code::imm_adr(w), "0");
+    break;
+  }
+  case AddressingMode::AbsLong: {
+    u32 l = src_.get_next_long();
+    res = Code::set_adr(s, Code::imm_adr(l), "0");
+    break;
+  }
+  }
+
+  flow_.ctx().writeln(pre + res + post);
 }
 
 
