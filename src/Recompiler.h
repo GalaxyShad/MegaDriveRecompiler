@@ -6,6 +6,7 @@
 #include "SourceBinary.h"
 #include "enums.h"
 #include "tinyint.h"
+#include <string>
 
 class Recompiler : public IFoundInstructionNotifier {
 public:
@@ -109,6 +110,38 @@ public:
                     u8 dn) override;
 
 private:
+  std::tuple<std::string, std::string, std::string>
+  set_value(Size s, AddressingMode m, u8 xn, const std::string &value);
+
+  std::tuple<std::string, std::string, std::string> 
+  get_value(Size s, AddressingMode m, u8 xn = 0, u8 dst_xn = 0xFF);
+
+  std::tuple<std::string, std::string, std::string>
+  upd_value(Size s, AddressingMode m, u8 xn, const std::string &operation);
+
+  std::string make_condition(Condition c) {
+    //clang-format off
+    switch (c) {
+    case Condition::True:           return "(1)";
+    case Condition::False:          return "(0)";
+    case Condition::Higher:         return "(!ctx->cc.c && !ctx->cc.z)";
+    case Condition::LowerOrSame:    return "(ctx->cc.c || ctx->cc.z)";
+    case Condition::CarryClear:     return "(!ctx->cc.c)";
+    case Condition::CarrySet:       return "(ctx->cc.c)";
+    case Condition::NotEqual:       return "(!ctx->cc.z)";
+    case Condition::Equal:          return "(ctx->cc.z)";
+    case Condition::OverflowClear:  return "(!ctx->cc.v)";
+    case Condition::OverflowSet:    return "(ctx->cc.v)";
+    case Condition::Plus:           return "(!ctx->cc.n)";
+    case Condition::Minus:          return "(ctx->cc.n)";
+    case Condition::GreaterOrEqual: return "(ctx->cc.n == ctx->cc.v)";
+    case Condition::LessThan:       return "(ctx->cc.n != ctx->cc.v)";
+    case Condition::GreaterThan:    return "(!ctx->cc.z && ctx->cc.n == ctx->cc.v)";
+    case Condition::LessOrEqual:    return "(ctx->cc.z || ctx->cc.n != ctx->cc.v)";
+    }
+    //clang-format on
+  }
+
   void call_function(u32 dst_adr, std::string pre = "", std::string post = "");
 
   SourceBinary& src_;
