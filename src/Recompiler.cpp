@@ -212,7 +212,9 @@ void Recompiler::not_(Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 void Recompiler::ext(Size s, u8 dn) { ///
   // NOT_IMPLEMENTED
-  flow_.ctx().writeln(std::format("{} = (0xFFFF{} * ({} >> (sizeof({}) * 8 - 1))) - (((sizeof({}) * 8) << 1) - 1) | {};", Code::dn(dn), s == Size::Byte ? "" : "FFFF", Code::dn(dn), Code::get_sizeof_size(s), Code::get_sizeof_size(s), Code::dn(dn)));
+  std::string res = std::format("{} = (0xFFFF{} * ({} >> (sizeof({}) * 8 - 1))) - (((sizeof({}) * 8) << 1) - 1) | {};", Code::dn(dn), s == Size::Byte ? "" : "FFFF", Code::dn(dn), Code::get_sizeof_size(s), Code::get_sizeof_size(s), Code::dn(dn));
+  std::string flags =  std::format("ctx->res = {}; ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;", Code::dn(dn));
+  flow_.ctx().writeln(res + flags);
 }
 
 
@@ -220,7 +222,9 @@ void Recompiler::nbcd(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
 void Recompiler::swap(u8 dn) { ///
-  flow_.ctx().writeln(std::format("{} = (({} & 0xFFFF) << 16) | (({} >> 16) & 0xFFFF);", Code::dn(dn), Code::dn(dn), Code::dn(dn)));
+  std::string res = std::format("{} = (({} & 0xFFFF) << 16) | (({} >> 16) & 0xFFFF);", Code::dn(dn), Code::dn(dn), Code::dn(dn));
+  std::string flags =  std::format("ctx->res = {}; ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;", Code::dn(dn));
+  flow_.ctx().writeln(res + flags);
 }
 
 
@@ -403,8 +407,8 @@ void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) { ///
   // NOT_IMPLEMENTED
   auto [pre, res, post] = upd_value(Size::Word, m, xn, "");
   std::string pre_ = std::format("{}\nif(({} != 0) && ({} / {} <= 0xFF))", pre, Code::dn(dn), res, Code::dn(dn));
-  std::string res_ = std::format("{} = (({} / {}) & 0xFF) | ((({} % {}) & 0xFF) << 8)",res,res,Code::dn(dn),res,Code::dn(dn));
-  std::string flags =  std::format("ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;");
+  std::string res_ = std::format("{} = (({} / {}) & 0xFF) | ((({} % {}) & 0xFF) << 8)", res, res,Code::dn(dn),res,Code::dn(dn));
+  std::string flags =  std::format("ctx->res = {}; ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;", res);
   flow_.ctx().writeln(pre_ + res_ + flags + post);
 }
 
@@ -413,8 +417,8 @@ void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) { ///
   // NOT_IMPLEMENTED
   auto [pre, res, post] = upd_value(Size::Word, m, xn, "");
   std::string pre_ = std::format("{}\nif(({} != 0) && ({} / {} <= 0xFF))", pre, Code::dn(dn), res, Code::dn(dn));
-  std::string res_ = std::format("{} = (({} / {}) & 0xFF) | ((({} % {}) & 0xFF) << 8)",res,res,Code::dn(dn),res,Code::dn(dn));
-  std::string flags =  std::format("ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;");
+  std::string res_ = std::format("{} = (({} / {}) & 0xFF) | ((({} % {}) & 0xFF) << 8)", res, res,Code::dn(dn),res,Code::dn(dn));
+  std::string flags =  std::format("ctx->res = {}; ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;", res);
   flow_.ctx().writeln(pre_ + res_ + flags + post);
 }
 
@@ -497,7 +501,7 @@ void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {///
   auto [pre, res, post] = upd_value(Size::Word, m, xn,"");
 
   std::string op = d == RotationDirection::Left ? "<<" : ">>";
-  std::string flag_c = std::format(" ctx->res = {}; ctx->cc.c = {}; ctx->cc.x = ctx->cc.c; {} {}= 1;", res, d == RotationDirection::Left ? std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(Size::Word)) : "ctx->res & 0b1", res, op);
+  std::string flag_c = std::format("ctx->res = {}; ctx->cc.c = {}; ctx->cc.x = ctx->cc.c; {} {}= 1;", res, d == RotationDirection::Left ? std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(Size::Word)) : "ctx->res & 0b1", res, op);
   std::string flags =  std::format("ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0;");
 
   flow_.ctx().writeln(pre + res + flag_c + flags + post + " //lsd");
