@@ -399,10 +399,24 @@ void Recompiler::moveq(u8 dn, u8 data) {
 }
 
 
-void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) { ///
+  // NOT_IMPLEMENTED
+  auto [pre, res, post] = upd_value(Size::Word, m, xn, "");
+  std::string pre_ = std::format("{}\nif(({} != 0) && ({} / {} <= 0xFF))", pre, Code::dn(dn), res, Code::dn(dn));
+  std::string res_ = std::format("{} = (({} / {}) & 0xFF) | ((({} % {}) & 0xFF) << 8)",res,res,Code::dn(dn),res,Code::dn(dn));
+  std::string flags =  std::format("ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;");
+  flow_.ctx().writeln(pre_ + res_ + flags + post);
+}
 
 
-void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) { ///
+  // NOT_IMPLEMENTED
+  auto [pre, res, post] = upd_value(Size::Word, m, xn, "");
+  std::string pre_ = std::format("{}\nif(({} != 0) && ({} / {} <= 0xFF))", pre, Code::dn(dn), res, Code::dn(dn));
+  std::string res_ = std::format("{} = (({} / {}) & 0xFF) | ((({} % {}) & 0xFF) << 8)",res,res,Code::dn(dn),res,Code::dn(dn));
+  std::string flags =  std::format("ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;");
+  flow_.ctx().writeln(pre_ + res_ + flags + post);
+}
 
 
 void Recompiler::sbcd(u8 xn, Mode m, u8 xn2) { NOT_IMPLEMENTED }
@@ -480,56 +494,13 @@ void Recompiler::asd(RotationDirection d, AddressingMode m, u8 xn) {
 
 
 void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {///
-  std::string src = "";
-  std::string post = "";
-  std::string pre = "";
+  auto [pre, res, post] = upd_value(Size::Word, m, xn,"");
 
-  switch (m) {
-    case AddressingMode::Address: {
-      src = Code::an(xn);
-      break;
-    }
-    case AddressingMode::AddressWithPostIncrement: {
-      NOT_IMPLEMENTED
-      // src = Code::an(xn);
-      // post = Code::incr_an(s, xn);
-      break;
-    }
-    case AddressingMode::AddressWithPreDecrement: {
-      NOT_IMPLEMENTED
-      // src = Code::an(xn);
-      // pre = Code::decr_an(s, xn);
-      break;
-    }
-    case AddressingMode::AddressWithDisplacement:
-    case AddressingMode::AddressWithIndex: {
-      NOT_IMPLEMENTED
-    }
+  std::string op = d == RotationDirection::Left ? "<<" : ">>";
+  std::string flag_c = std::format(" ctx->res = {}; ctx->cc.c = {}; ctx->cc.x = ctx->cc.c; {} {}= 1;", res, d == RotationDirection::Left ? std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(Size::Word)) : "ctx->res & 0b1", res, op);
+  std::string flags =  std::format("ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0;");
 
-    case AddressingMode::AbsWord: {
-      u16 w = src_.get_next_word();
-      src = Code::imm(w);
-      break;
-    }
-    case AddressingMode::AbsLong: {
-      u32 l = src_.get_next_long();
-      src = Code::imm(l);
-      break;
-    }
-
-    case AddressingMode::DataRegister:
-    case AddressingMode::AddressRegister:
-    case AddressingMode::Immediate:
-    case AddressingMode::PcWithDisplacement:
-    case AddressingMode::PcWithIndex:
-    default: { throw ("Fatal Error"); }
-  }
-
-  if(d == RotationDirection::Left){
-    flow_.ctx().writeln(pre + std::format("{} <<= 1;", src) + post);
-  } else{
-    flow_.ctx().writeln(pre + std::format("{} >>= 1;", src) + post);
-  }
+  flow_.ctx().writeln(pre + res + flag_c + flags + post + " //lsd");
 }
 
 
@@ -539,56 +510,15 @@ void Recompiler::rox(RotationDirection d, AddressingMode m, u8 xn) {
 
 
 void Recompiler::rod(RotationDirection d, AddressingMode m, u8 xn) { ///
-  std::string src = "";
-  std::string post = "";
-  std::string pre = "";
+  auto [pre, res, post] = upd_value(Size::Word, m, xn,"");
 
-  switch (m) {
-    case AddressingMode::Address: {
-      src = Code::an(xn);
-      break;
-    }
-    case AddressingMode::AddressWithPostIncrement: {
-      NOT_IMPLEMENTED
-      // src = Code::an(xn);
-      // post = Code::incr_an(s, xn);
-      break;
-    }
-    case AddressingMode::AddressWithPreDecrement: {
-      NOT_IMPLEMENTED
-      // src = Code::an(xn);
-      // pre = Code::decr_an(s, xn);
-      break;
-    }
-    case AddressingMode::AddressWithDisplacement:
-    case AddressingMode::AddressWithIndex: {
-      NOT_IMPLEMENTED
-    }
+  std::string op = d == RotationDirection::Left ? "<<" : ">>";
+  std::string op_ = d == RotationDirection::Left ? ">>" : "<<";
+              res = std::format("{} = ({} {} 1) | ({} {} (sizeof({}) * 8 - 1));", res, res, op, res, op_, Code::get_sizeof_size(Size::Word));
+  std::string flag_c = std::format("ctx->res = {}; ctx->cc.c = {};", res, d == RotationDirection::Left ? "ctx->res & 0b1" : std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(Size::Word)));
+  std::string flags =  std::format("ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0;");
 
-    case AddressingMode::AbsWord: {
-      u16 w = src_.get_next_word();
-      src = Code::imm(w);
-      break;
-    }
-    case AddressingMode::AbsLong: {
-      u32 l = src_.get_next_long();
-      src = Code::imm(l);
-      break;
-    }
-
-    case AddressingMode::DataRegister:
-    case AddressingMode::AddressRegister:
-    case AddressingMode::Immediate:
-    case AddressingMode::PcWithDisplacement:
-    case AddressingMode::PcWithIndex:
-    default: { throw ("Fatal Error"); }
-  }
-  
-  if(d == RotationDirection::Left){
-    flow_.ctx().writeln(pre + std::format("{} = ({} << {}) | ({} >> (sizeof({}) * 8 - {}));", src, src, 1, src, Code::get_sizeof_size(Size::Word), 1) + post);
-  } else{
-    flow_.ctx().writeln(pre + std::format("{} = ({} >> {}) | ({} << (sizeof({}) * 8 - {}));", src, src, 1, src, Code::get_sizeof_size(Size::Word), 1) + post);
-  }
+  flow_.ctx().writeln(pre + res + flag_c + flags + post + " //rod");
 }
 
 
@@ -601,27 +531,22 @@ void Recompiler::asd_rotation(u8 rotation, RotationDirection d, Size s,
 void Recompiler::lsd_rotation(u8 rotation, RotationDirection d, Size s,
                               Rotation m, u8 dn) {///
   std::string count_shift;
-  switch (m) {
-    case Rotation::Immediate: {
-      count_shift = std::format("{}", rotation ? rotation : 8);
-      break;
-    }
-    case Rotation::Register:{
-      if(s == Size::Long){
-        count_shift = std::format("{}", Code::dn(rotation));
-      } else {
-        count_shift = std::format("({} % 64)", Code::dn(rotation));
-      }
-      break;
+  if (m == Rotation::Immediate) {
+    count_shift = std::format("({} - 1)", rotation ? rotation : 8);
+  } else {
+    if(s == Size::Long){
+      count_shift = std::format("({} - 1)", Code::dn(rotation));
+    } else {
+      count_shift = std::format("(({} - 1) % 64)", Code::dn(rotation));
     }
   }
 
-  if(d == RotationDirection::Left){
-    flow_.ctx().writeln(std::format("{} <<= {};", Code::dn(dn), count_shift));
-  }
-  else{
-    flow_.ctx().writeln(std::format("{} >>= {};", Code::dn(dn), count_shift));
-  }
+  std::string op = d == RotationDirection::Left ? "<<" : ">>";
+  std::string res = std::format("{} {}= {};", Code::dn(dn), op, count_shift);
+  std::string flag_c = std::format("ctx->res = {}; ctx->cc.c = {}; ctx->cc.x = ctx->cc.c; {} {}= 1;", Code::dn(dn), d == RotationDirection::Left ? std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(s)) : "ctx->res & 0b1", Code::dn(dn), op);
+  std::string flags =  std::format("ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0;");
+
+  flow_.ctx().writeln(res + flag_c + flags + " //lsd_rotation");
 }
 
 
@@ -634,26 +559,23 @@ void Recompiler::rox_rotation(u8 rotation, RotationDirection d, Size s,
 void Recompiler::rod_rotation(u8 rotation, RotationDirection d, Size s,
                               Rotation m, u8 dn) { ///
   std::string count_shift;
-  switch (m) {
-    case Rotation::Immediate: {
-      count_shift = std::format("{}", rotation ? rotation : 8);
-      break;
-    }
-    case Rotation::Register:{
-      if(s == Size::Long){
-        count_shift = std::format("{}", Code::dn(rotation));
-      } else {
-        count_shift = std::format("({} % 64)", Code::dn(rotation));
-      }
-      break;
+  if (m == Rotation::Immediate) {
+    count_shift = std::format("({} - 1)", rotation ? rotation : 8);
+  } else {
+    if(s == Size::Long){
+      count_shift = std::format("({} - 1)", Code::dn(rotation));
+    } else {
+      count_shift = std::format("(({} - 1) % 64)", Code::dn(rotation));
     }
   }
-  
-  if(d == RotationDirection::Left){
-    flow_.ctx().writeln(std::format("{} = ({} << {}) | ({} >> (sizeof({}) * 8 - {}));", Code::dn(dn), Code::dn(dn), count_shift, Code::dn(dn), Code::get_sizeof_size(s), count_shift));
-  } else{
-    flow_.ctx().writeln(std::format("{} = ({} >> {}) | ({} << (sizeof({}) * 8 - {}));", Code::dn(dn), Code::dn(dn), count_shift, Code::dn(dn), Code::get_sizeof_size(s), count_shift));
-  }
+
+  std::string op = d == RotationDirection::Left ? "<<" : ">>";
+  std::string op_ = d == RotationDirection::Left ? ">>" : "<<";
+  std::string res = std::format("{} = ({} {} {}) | ({} {} (sizeof({}) * 8 - {}));", Code::dn(dn), Code::dn(dn), op, count_shift, Code::dn(dn), op_, Code::get_sizeof_size(s), count_shift);
+  std::string flag_c = std::format("ctx->res = {}; ctx->cc.c = {};", Code::dn(dn), d == RotationDirection::Left ? "ctx->res & 0b1" : std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(s)));
+  std::string flags =  std::format("ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0;");
+
+  flow_.ctx().writeln(res + flag_c + flags + " //rod_rotation");
 }
 
 void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post) {
