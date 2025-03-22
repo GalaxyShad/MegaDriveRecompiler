@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 namespace ident {
-    // clang-format off
+// clang-format off
   Size ident_size(u8 s) { 
     switch (s) {
       case 0b00: return Size::Byte;
@@ -125,7 +125,7 @@ namespace ident {
     };
   }
 
-  // clang-format on
-}
+// clang-format on
+} // namespace ident
 
 #endif // __CLIONPROJECTS_M68K_DISASSEMBLER_SRC_IDENT_H_

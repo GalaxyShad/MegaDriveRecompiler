@@ -8,24 +8,19 @@
 class Code {
 public:
     static std::string if_cond(std::string cond, std::string body) {
-        return std::format("if ({}) {{\n", cond) + std::format("        {}\n    }}", body); 
+        return std::format("if ({}) {{\n", cond) +
+               std::format("        {}\n    }}", body);
     }
 
     static std::string imm_adr(u32 im) {
         return std::format("ctx->mem + 0x{:X}", im);
     }
 
-    static std::string imm(u32 im) {
-        return std::format("0x{:X}", im);
-    }
+    static std::string imm(u32 im) { return std::format("0x{:X}", im); }
 
-    static std::string dn(u8 reg) {
-        return std::format("ctx->d{}", reg);
-    }
+    static std::string dn(u8 reg) { return std::format("ctx->d{}", reg); }
 
-    static std::string an(u8 reg) {
-        return std::format("ctx->a{}", reg);
-    }
+    static std::string an(u8 reg) { return std::format("ctx->a{}", reg); }
 
     static std::string call_function(std::string name) {
         return std::format("{}(ctx);", name);
@@ -40,7 +35,8 @@ public:
     }
 
     static std::string set_adr(Size size, std::string dst, std::string src) {
-        return std::format("MOVE_TO_ADR_{}({}, {});", get_macro_size(size), dst, src);
+        return std::format("MOVE_TO_ADR_{}({}, {});", get_macro_size(size), dst,
+                           src);
     }
 
     static std::string deref_adr(Size size, std::string src) {
@@ -48,28 +44,35 @@ public:
     }
 
     static std::string incr_an(Size size, u8 reg) {
-        return std::format(" ctx->a{} += sizeof({});", reg, get_sizeof_size(size));
+        return std::format(" ctx->a{} += sizeof({});", reg,
+                           get_sizeof_size(size));
     }
 
     static std::string decr_an(Size size, u8 reg) {
-        return std::format("ctx->a{} -= sizeof({}); ", reg, get_sizeof_size(size));
+        return std::format("ctx->a{} -= sizeof({}); ", reg,
+                           get_sizeof_size(size));
     }
 
     static std::string get_sizeof_size(Size size) {
         switch (size) {
-        case Size::Byte: return "u8"; 
-        case Size::Word: return "u16"; 
-        case Size::Long: return "u32"; 
+        case Size::Byte:
+            return "u8";
+        case Size::Word:
+            return "u16";
+        case Size::Long:
+            return "u32";
         }
     }
 
 private:
-
     static std::string get_macro_size(Size size) {
         switch (size) {
-        case Size::Byte: return "U8"; 
-        case Size::Word: return "U16"; 
-        case Size::Long: return "U32"; 
+        case Size::Byte:
+            return "U8";
+        case Size::Word:
+            return "U16";
+        case Size::Long:
+            return "U32";
         }
     }
 

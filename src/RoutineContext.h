@@ -6,15 +6,14 @@
 #include <vector>
 
 struct RoutineContext {
-  u32 adr;
-  std::string name;
+    u32 adr;
+    std::string name;
 
-  u32 last_pc;
+    u32 last_pc;
 
-  std::vector<std::string> line_list;
+    std::vector<std::string> line_list;
 
-  void writeln(const std::string &line) { line_list.push_back(line); }
+    void writeln(const std::string &line) { line_list.push_back(line); }
 };
-
 
 #endif // __CLIONPROJECTS_M68K_DISASSEMBLER_SRC_ROUTINECONTEXT_H_

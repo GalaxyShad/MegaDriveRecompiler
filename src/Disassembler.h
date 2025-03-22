@@ -6,15 +6,14 @@
 
 class Disassembler {
 public:
-  Disassembler(SourceBinary& src,
-               IFoundInstructionNotifier *n)
-      : src_(src),  n_(n) {}
-    
-  void disassemble();
+    Disassembler(SourceBinary &src, IFoundInstructionNotifier *n)
+        : src_(src), n_(n) {}
+
+    void disassemble();
 
 private:
-  IFoundInstructionNotifier *n_;
-  SourceBinary& src_;
+    IFoundInstructionNotifier *n_;
+    SourceBinary &src_;
 };
 
 #endif // __CLIONPROJECTS_M68K_DISASSEMBLER_SRC_DISASSEMBLER_H_
