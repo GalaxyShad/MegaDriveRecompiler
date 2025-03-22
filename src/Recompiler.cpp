@@ -21,9 +21,7 @@ void Recompiler::ori_to_ccr(u8 data) { NOT_IMPLEMENTED }
 void Recompiler::ori_to_sr(u16 data) { NOT_IMPLEMENTED }
 
 
-void Recompiler::ori(Size s, AddressingMode m, u8 xn, u32 data) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::ori(Size s, AddressingMode m, u8 xn, u32 data) { NOT_IMPLEMENTED }
 
 
 void Recompiler::andi_to_ccr(u8 data) { NOT_IMPLEMENTED }
@@ -57,14 +55,10 @@ void Recompiler::andi(Size s, AddressingMode m, u8 xn, u32 data) {
 }
 
 
-void Recompiler::subi(Size s, AddressingMode m, u8 xn, u32 data) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::subi(Size s, AddressingMode m, u8 xn, u32 data) { NOT_IMPLEMENTED }
 
 
-void Recompiler::addi(Size s, AddressingMode m, u8 xn, u32 data) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::addi(Size s, AddressingMode m, u8 xn, u32 data) { NOT_IMPLEMENTED }
 
 
 void Recompiler::eori_to_ccr(u8 data) { NOT_IMPLEMENTED }
@@ -73,9 +67,7 @@ void Recompiler::eori_to_ccr(u8 data) { NOT_IMPLEMENTED }
 void Recompiler::eori_to_sr(u16 data) { NOT_IMPLEMENTED }
 
 
-void Recompiler::eori(Size s, AddressingMode m, u8 xn, u32 data) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::eori(Size s, AddressingMode m, u8 xn, u32 data) { NOT_IMPLEMENTED }
 
 
 void Recompiler::cmpi(Size s, AddressingMode m, u8 xn, u32 data) {
@@ -113,15 +105,10 @@ void Recompiler::cmpi(Size s, AddressingMode m, u8 xn, u32 data) {
 
 
 void Recompiler::btst(AddressingMode m, u8 xn, u8 bitindex) { 
-
   Size s = (m == AddressingMode::DataRegister) ? Size::Long : Size::Byte;
-
-  if (s == Size::Byte) {
-    bitindex %= 8;
-  }
-
   auto [pre, res, post] = get_value(s, m, xn);
 
+  if (s == Size::Byte) bitindex %= 8;
   res = std::format("ctx->cc.z = (({} & {:X}) == 0);", res, 1 << bitindex);
 
   flow_.ctx().writeln(pre + res + post + " // btst");
@@ -137,39 +124,25 @@ void Recompiler::bclr(AddressingMode m, u8 xn, u8 bitindex) { NOT_IMPLEMENTED }
 void Recompiler::bset(AddressingMode m, u8 xn, u8 bitindex) { NOT_IMPLEMENTED }
 
 
-void Recompiler::btst_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::btst_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) { NOT_IMPLEMENTED }
 
 
-void Recompiler::bchg_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::bchg_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) { NOT_IMPLEMENTED }
 
 
-void Recompiler::bclr_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::bclr_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) { NOT_IMPLEMENTED }
 
 
-void Recompiler::bset_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::bset_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) { NOT_IMPLEMENTED }
 
 
-void Recompiler::movep(u8 dn, DirectionR d, Size s, u8 an, u16 displacement) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::movep(u8 dn, DirectionR d, Size s, u8 an, u16 displacement) { NOT_IMPLEMENTED }
 
 
-void Recompiler::movea(Size s, u8 an, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::movea(Size s, u8 an, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn,
-                      AddressingMode dst_m, u8 dst_xn) {
-
+void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode dst_m, u8 dst_xn) {
   auto [src_pre, src, src_post] = get_value(s, src_m, src_xn, dst_xn);
   auto [dst_pre, dst, dst_post] = set_value(s, dst_m, dst_xn, src); 
 
@@ -288,10 +261,7 @@ void Recompiler::jsr(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 void Recompiler::jmp(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::movem(DirectionR d, Size s, AddressingMode m, u8 xn,
-                       u16 reg_mask) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::movem(DirectionR d, Size s, AddressingMode m, u8 xn,  u16 reg_mask) { NOT_IMPLEMENTED }
 
 
 void Recompiler::lea(u8 an, AddressingMode m, u8 xn) { 
@@ -426,40 +396,28 @@ void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) { ///
 void Recompiler::sbcd(u8 xn, Mode m, u8 xn2) { NOT_IMPLEMENTED }
 
 
-void Recompiler::or_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::or_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
 void Recompiler::subx_(u8 xn, Size s, Mode m, u8 xn2) { NOT_IMPLEMENTED }
 
 
-void Recompiler::suba_(u8 an, Size s, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::suba_(u8 an, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::eor_(u8 dn, Size s, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::eor_(u8 dn, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
 void Recompiler::cmpm_(u8 an, Size s, u8 an2) { NOT_IMPLEMENTED }
 
 
-void Recompiler::cmp_(u8 dn, Size s, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::cmp_(u8 dn, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::cmpa_(u8 an, Size s, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::cmpa_(u8 an, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
 void Recompiler::mulu(u8 dn, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
@@ -474,27 +432,19 @@ void Recompiler::abcd(u8 xn, Mode m, u8 xn2) { NOT_IMPLEMENTED }
 void Recompiler::exg(u8 rx, u8 opmode, u8 ry) { NOT_IMPLEMENTED }
 
 
-void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
 void Recompiler::addx_(u8 xn, Size s, Mode m, u8 xn2) { NOT_IMPLEMENTED }
 
 
-void Recompiler::adda_(u8 an, Size s, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::adda_(u8 an, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::asd(RotationDirection d, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::asd(RotationDirection d, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
 void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {///
@@ -508,9 +458,7 @@ void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {///
 }
 
 
-void Recompiler::rox(RotationDirection d, AddressingMode m, u8 xn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::rox(RotationDirection d, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 
 void Recompiler::rod(RotationDirection d, AddressingMode m, u8 xn) { ///
@@ -526,14 +474,10 @@ void Recompiler::rod(RotationDirection d, AddressingMode m, u8 xn) { ///
 }
 
 
-void Recompiler::asd_rotation(u8 rotation, RotationDirection d, Size s,
-                              Rotation m, u8 dn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::asd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::lsd_rotation(u8 rotation, RotationDirection d, Size s,
-                              Rotation m, u8 dn) {///
+void Recompiler::lsd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) {///
   std::string count_shift;
   if (m == Rotation::Immediate) {
     count_shift = std::format("({} - 1)", rotation ? rotation : 8);
@@ -554,14 +498,10 @@ void Recompiler::lsd_rotation(u8 rotation, RotationDirection d, Size s,
 }
 
 
-void Recompiler::rox_rotation(u8 rotation, RotationDirection d, Size s,
-                              Rotation m, u8 dn) {
-  NOT_IMPLEMENTED
-}
+void Recompiler::rox_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) { NOT_IMPLEMENTED }
 
 
-void Recompiler::rod_rotation(u8 rotation, RotationDirection d, Size s,
-                              Rotation m, u8 dn) { ///
+void Recompiler::rod_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) { ///
   std::string count_shift;
   if (m == Rotation::Immediate) {
     count_shift = std::format("({} - 1)", rotation ? rotation : 8);
@@ -676,9 +616,7 @@ Recompiler::get_value(Size s, AddressingMode m, u8 xn, u8 dst_xn) {
 }
 
 std::tuple<std::string, std::string, std::string>
-Recompiler::upd_value(Size s, AddressingMode m, u8 xn,
-                      const std::string &operation
-) {
+Recompiler::upd_value(Size s, AddressingMode m, u8 xn, const std::string &operation) {
   std::string pre, dst, post;
 
   switch (m) {
@@ -744,9 +682,7 @@ Recompiler::upd_value(Size s, AddressingMode m, u8 xn,
 }
 
 std::tuple<std::string, std::string, std::string>
-Recompiler::set_value(Size s, AddressingMode m, u8 xn,
-                      const std::string &value
-) {
+Recompiler::set_value(Size s, AddressingMode m, u8 xn, const std::string &value) {
   std::string pre, dst, post;
 
   switch (m) {
