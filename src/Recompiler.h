@@ -7,6 +7,26 @@
 #include "enums.h"
 #include "tinyint.h"
 #include <string>
+#include <tuple>
+
+struct DecodedEffectiveAddress {
+  Size size;
+  AddressingMode mode;
+  u8 xn;
+
+  u8 dst_xn;
+
+  union {
+    u8 index;
+    u16 displacement;
+    u16 abs_word_adr;
+    u32 abs_long_adr;
+    u32 immediate_data;
+
+    u32 pc_with_index;
+    u32 pc_with_displacement;
+  };
+};
 
 class Recompiler : public IFoundInstructionNotifier {
 public:
@@ -119,28 +139,16 @@ private:
   std::tuple<std::string, std::string, std::string>
   upd_value(Size s, AddressingMode m, u8 xn, const std::string &operation);
 
-  std::string make_condition(Condition c) {
-    //clang-format off
-    switch (c) {
-    case Condition::True:           return "(1)";
-    case Condition::False:          return "(0)";
-    case Condition::Higher:         return "(!ctx->cc.c && !ctx->cc.z)";
-    case Condition::LowerOrSame:    return "(ctx->cc.c || ctx->cc.z)";
-    case Condition::CarryClear:     return "(!ctx->cc.c)";
-    case Condition::CarrySet:       return "(ctx->cc.c)";
-    case Condition::NotEqual:       return "(!ctx->cc.z)";
-    case Condition::Equal:          return "(ctx->cc.z)";
-    case Condition::OverflowClear:  return "(!ctx->cc.v)";
-    case Condition::OverflowSet:    return "(ctx->cc.v)";
-    case Condition::Plus:           return "(!ctx->cc.n)";
-    case Condition::Minus:          return "(ctx->cc.n)";
-    case Condition::GreaterOrEqual: return "(ctx->cc.n == ctx->cc.v)";
-    case Condition::LessThan:       return "(ctx->cc.n != ctx->cc.v)";
-    case Condition::GreaterThan:    return "(!ctx->cc.z && ctx->cc.n == ctx->cc.v)";
-    case Condition::LessOrEqual:    return "(ctx->cc.z || ctx->cc.n != ctx->cc.v)";
-    }
-    //clang-format on
-  }
+  std::tuple<std::string, std::string, std::string>
+  fmt_get_value(const DecodedEffectiveAddress &ea);
+
+  std::tuple<std::string, std::string, std::string>
+  fmt_set_value(const DecodedEffectiveAddress &ea, const std::string &value);
+
+  DecodedEffectiveAddress decode_ea(Size s, AddressingMode m, u8 xn,
+                                    u8 src_xn = 0xFF);
+
+  std::string make_condition(Condition c);
 
   void call_function(u32 dst_adr, std::string pre = "", std::string post = "");
 
