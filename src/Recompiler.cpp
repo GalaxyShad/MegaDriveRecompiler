@@ -364,24 +364,35 @@ void Recompiler::dbcc(Condition c, u8 dn, u16 displacement) {
     call_function(dst_adr, std::format("if ({} != -1) ", Code::dn(dn)));
 }
 
-void Recompiler::bra(u16 displacement) {
-    i16 d = displacement;
-    u32 dst = src_.get_pc() + d - 2;
+void Recompiler::bra(u8 displacement) {
+    i16 displ = (displacement == 0) ? src_.get_next_word() : (i8)displacement;
+    if (displacement == 0) {
+        displ -= 2;
+    }
 
-    call_function(dst, "", " return;");
+    u32 dst_adr = src_.get_pc() + displ;
+
+    call_function(dst_adr, "", " return;");
 }
 
-void Recompiler::bsr(u16 displacement) {
-    i16 d = displacement;
-    u32 dst = src_.get_pc() + d - 2;
+void Recompiler::bsr(u8 displacement) {
+    i16 displ = (displacement == 0) ? src_.get_next_word() : (i8)displacement;
+    if (displacement == 0) {
+        displ -= 2;
+    }
 
-    call_function(dst);
+    u32 dst_adr = src_.get_pc() + displ;
+
+    call_function(dst_adr);
 }
 
-void Recompiler::bcc(Condition c, u16 displacement) {
+void Recompiler::bcc(Condition c, u8 displacement) {
     auto cond = make_condition(c);
 
-    i16 displ = (displacement == 0) ? src_.get_next_word() : displacement;
+    i16 displ = (displacement == 0) ? src_.get_next_word() : (i8)displacement;
+    if (displacement == 0) {
+        displ -= 2;
+    }
 
     u32 dst_adr = src_.get_pc() + displ;
 
@@ -640,11 +651,22 @@ void Recompiler::rox_rotation(u8 rotation, RotationDirection d, Size s, Rotation
     if (rotation == 0)
         rotation = 8;
 
-    // TODO
+    std::string rot_value;
 
-    // flow_.ctx().writeln("/* rox TODO */");
+    switch (m) {
+        case Rotation::Immediate: rot_value = std::format("{}", rotation); break;
+        case Rotation::Register: rot_value = std::format("({} % 64)", Code::dn(rotation)); break;
+    }
 
-    NOT_IMPLEMENTED
+    if (d == RotationDirection::Left) {
+        flow_.ctx().writeln(
+            std::format("{} = ROXL({}, {});", Code::dn(dn), Code::dn(dn), rot_value)
+        );
+    } else {
+        flow_.ctx().writeln(
+            std::format("{} = ROXR({}, {});", Code::dn(dn), Code::dn(dn), rot_value)
+        );
+    }
 }
 
 void Recompiler::rod_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) {///
@@ -674,6 +696,9 @@ void Recompiler::rod_rotation(u8 rotation, RotationDirection d, Size s, Rotation
         );
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 
 void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post) {
     auto fn_name = flow_.get_name_for_label(dst_adr);
@@ -715,7 +740,6 @@ Recompiler::set_value(Size s, AddressingMode m, u8 xn, const std::string &value)
 }
 
 std::string Recompiler::make_condition(Condition c) {
-    //clang-format off
     switch (c) {
         case Condition::True:
             return "(1)";
@@ -750,11 +774,11 @@ std::string Recompiler::make_condition(Condition c) {
         case Condition::LessOrEqual:
             return "(ctx->cc.z || ctx->cc.n != ctx->cc.v)";
     }
-    //clang-format on
 }
 
 DecodedEffectiveAddress Recompiler::decode_ea(Size s, AddressingMode m, u8 xn, u8 src_xn) {
     DecodedEffectiveAddress res = {
+        .size = s,
         .mode = m,
         .xn = xn,
         .dst_xn = src_xn,
@@ -788,7 +812,7 @@ DecodedEffectiveAddress Recompiler::decode_ea(Size s, AddressingMode m, u8 xn, u
             break;
         }
         case AddressingMode::PcWithDisplacement: {
-            // TODO
+            NOT_IMPLEMENTED
             break;
         }
         case AddressingMode::PcWithIndex: {
@@ -937,3 +961,8 @@ Recompiler::fmt_get_value(const DecodedEffectiveAddress &ea) {
 
     return {pre, src, post};
 }
+
+void Recompiler::write_all_to_file() {
+    RecompilerSourceGenerator gen(flow_);
+    gen.write_to_file();
+};

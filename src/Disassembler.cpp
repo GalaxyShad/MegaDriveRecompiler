@@ -336,21 +336,11 @@ void Disassembler::disassemble() {
     } else if ((op & 0b1111111100000000) == 0b0110000000000000) {
         // BRA
         u8 displacement = (op >> 0) & 0b11111111;
-        if (displacement == 0) {
-            u16 im = src_.get_next_word();
-            n_->bsr(im);
-        } else {
-            n_->bsr(displacement);
-        }
+        n_->bsr(displacement);
     } else if ((op & 0b1111111100000000) == 0b0110000100000000) {
         // BSR
         u8 displacement = (op >> 0) & 0b11111111;
-        if (displacement == 0) {
-            u16 im = src_.get_next_word();
-            n_->bsr(im);
-        } else {
-            n_->bsr(displacement);
-        }
+        n_->bsr(displacement);
     } else if ((op & 0b1111000000000000) == 0b0110000000000000) {
         // Bcc
         u8 condition = (op >> 8) & 0b1111;

@@ -5,6 +5,7 @@
 #include "Disassembler.h"
 #include "Recompiler.h"
 #include "RecompilerFlow.h"
+#include "RecompilerSourceGenerator.h"
 #include "SourceBinary.h"
 #include "tinyint.h"
 
@@ -23,6 +24,7 @@ auto main() -> int {
         try {
             disasm.disassemble();
         } catch (std::invalid_argument e) {
+            recomp.write_all_to_file();
             std::println("[ERR] at {:X}, last_value: {:X} -> {}",
                          binary.get_pc(), binary.last_read_value(), e.what());
             return 1;

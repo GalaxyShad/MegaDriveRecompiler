@@ -92,9 +92,9 @@ public:
     void subq(u8 data, Size s, AddressingMode m, u8 xn) override;
     void scc(Condition c, AddressingMode m, u8 xn) override;
     void dbcc(Condition c, u8 dn, u16 displacement) override;
-    void bra(u16 displacement) override;
-    void bsr(u16 displacement) override;
-    void bcc(Condition c, u16 displacement) override;
+    void bra(u8 displacement) override;
+    void bsr(u8 displacement) override;
+    void bcc(Condition c, u8 displacement) override;
     void moveq(u8 dn, u8 data) override;
     void divu(u8 dn, AddressingMode m, u8 xn) override;
     void divs(u8 dn, AddressingMode m, u8 xn) override;
@@ -128,6 +128,8 @@ public:
                       u8 dn) override;
     void rod_rotation(u8 rotation, RotationDirection d, Size s, Rotation m,
                       u8 dn) override;
+
+    void write_all_to_file();
 
 private:
     std::tuple<std::string, std::string, std::string>

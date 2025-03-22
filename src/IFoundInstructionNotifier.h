@@ -65,9 +65,9 @@ struct IFoundInstructionNotifier {
     virtual void subq(u8 data, Size s, AddressingMode m, u8 xn) = 0;
     virtual void scc(Condition c, AddressingMode m, u8 xn) = 0;
     virtual void dbcc(Condition c, u8 dn, u16 displacement) = 0;
-    virtual void bra(u16 displacement) = 0;
-    virtual void bsr(u16 displacement) = 0;
-    virtual void bcc(Condition c, u16 displacement) = 0;
+    virtual void bra(u8 displacement) = 0;
+    virtual void bsr(u8 displacement) = 0;
+    virtual void bcc(Condition c, u8 displacement) = 0;
     virtual void moveq(u8 dn, u8 data) = 0;
     virtual void divu(u8 dn, AddressingMode m, u8 xn) = 0;
     virtual void divs(u8 dn, AddressingMode m, u8 xn) = 0;
