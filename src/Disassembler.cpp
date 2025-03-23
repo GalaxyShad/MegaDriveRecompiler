@@ -3,6 +3,10 @@
 #include "ident.h"
 
 void Disassembler::disassemble() {
+    if (src_.get_pc() == 0x382) {
+        
+    }
+
     u16 op = src_.get_next_word();
 
     // http://goldencrystal.free.fr/M68kOpcodes-v2.3.pdf

@@ -150,8 +150,11 @@ void Recompiler::movea(Size s, u8 an, AddressingMode m, u8 xn) {
 
 void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode dst_m, u8 dst_xn) {
 
-    auto [src_pre, src, src_post] = get_value(s, src_m, src_xn, dst_xn);
-    auto [dst_pre, dst, dst_post] = set_value(s, dst_m, dst_xn, src);
+    auto src_ea = decode_ea(s, src_m, src_xn, dst_xn);
+    auto dst_ea = decode_ea(s, dst_m, dst_xn);
+
+    auto [src_pre, src, src_post] = fmt_get_value(src_ea);
+    auto [dst_pre, dst, dst_post] = fmt_set_value(dst_ea, src);
 
     flow_.ctx().writeln(src_pre + dst_pre + dst + src_post + dst_post + " // move");
 }
@@ -808,7 +811,9 @@ DecodedEffectiveAddress Recompiler::decode_ea(Size s, AddressingMode m, u8 xn, u
             break;
         }
         case AddressingMode::Immediate: {
-            res.immediate_data = src_.get_next_by_size(s);
+            res.immediate_data = (s == Size::Byte) 
+                ? (src_.get_next_word() & 0xFF) 
+                : src_.get_next_by_size(s);
             break;
         }
         case AddressingMode::PcWithDisplacement: {
