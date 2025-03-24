@@ -3,7 +3,7 @@
 #include "ident.h"
 
 void Disassembler::disassemble() {
-    if (src_.get_pc() == 0x1E74) {
+    if (src_.get_pc() == 0x1578) {
 
     }
 
@@ -288,7 +288,7 @@ void Disassembler::disassemble() {
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
         n_->jmp(ident::ident_effective_adr(m, xn), xn);
-    } else if ((op & 0b1111101111000000) == 0b0100100010000000) {
+    } else if ((op & 0b1111'101'11'0'000000) == 0b0100'100'01'0'000000) {
         // MOVEM
         u8 d = (op >> 10) & 0b1;
         u8 s = (op >> 6) & 0b1;

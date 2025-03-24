@@ -45,7 +45,10 @@ void Recompiler::andi(Size s, AddressingMode m, u8 xn, u32 data) {
 }
 
 void Recompiler::subi(Size s, AddressingMode m, u8 xn, u32 data) {
-    NOT_IMPLEMENTED
+    auto [pre, res, post] =
+        upd_value(s, m, xn, std::format(" - {}", Code::imm(data)));
+
+    flow_.ctx().writeln(pre + res + post + " // subi");
 }
 
 void Recompiler::addi(Size s, AddressingMode m, u8 xn, u32 data) {
@@ -145,7 +148,13 @@ void Recompiler::movep(u8 dn, DirectionR d, Size s, u8 an, u16 displacement) {
 }
 
 void Recompiler::movea(Size s, u8 an, AddressingMode m, u8 xn) {
-    NOT_IMPLEMENTED
+    auto ea = decode_ea(s, m, xn);
+
+    auto [pre, src, post] = fmt_get_value(ea);
+    
+    auto res = std::format("{} = {};", Code::an(an), src);
+
+    flow_.ctx().writeln(pre + res + post);
 }
 
 void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode dst_m, u8 dst_xn) {
@@ -303,7 +312,7 @@ void Recompiler::jsr(AddressingMode m, u8 xn) {
             break;
         }
         case AddressingMode::PcWithIndex: {
-            call_xn_function(src_.get_pc()-4, ea.pc_with_index);
+            call_xn_function(src_.get_pc()-4, ea.pc_with_index, Code::dn(0));
             break;
         }
 
@@ -454,11 +463,32 @@ void Recompiler::sbcd(u8 xn, Mode m, u8 xn2) {
 }
 
 void Recompiler::or_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
-    NOT_IMPLEMENTED
+    if (d != DirectionO::Dn_x_ea_to_Dn) {
+        // TODO
+        NOT_IMPLEMENTED
+    }
+
+    // TODO flags
+
+    auto [spre, sres, spost] = get_value(s, m, xn, dn);
+    auto [dpre, dres, dpost] = upd_value(s, AddressingMode::DataRegister, dn, std::format(" | {}", sres));
+
+    flow_.ctx().writeln(spre + dpre + dres + dpost + spost + " // or");
 }
 
 void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
-    NOT_IMPLEMENTED
+    if (d != DirectionO::Dn_x_ea_to_Dn) {
+        // TODO
+        NOT_IMPLEMENTED
+    }
+
+    // TODO flags
+
+    auto [spre, sres, spost] = get_value(s, m, xn, dn);
+    auto [dpre, dres, dpost] = upd_value(s, AddressingMode::DataRegister, dn, std::format(" - {}", sres));
+
+    flow_.ctx().writeln(spre + dpre + dres + dpost + spost + " // sub");
+
 }
 
 void Recompiler::subx_(u8 xn, Size s, Mode m, u8 xn2) {
@@ -757,10 +787,10 @@ void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post) {
     }
 }
 
-void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string pre, std::string post) {
+void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::string pre, std::string post) {
     auto& xn_list = flow_.get_xn_list_for_adr(pc);
 
-    flow_.ctx().writeln("switch () {");
+    flow_.ctx().writeln(std::format("switch ({}) {{", xn));
     for (auto& i : xn_list) {
         u32 adr = dst_adr + i;
 
@@ -941,7 +971,8 @@ Recompiler::fmt_set_value(const DecodedEffectiveAddress &ea, const std::string &
         }
 
         case AddressingMode::AddressWithIndex: {
-            NOT_IMPLEMENTED
+            dst = Code::set_adr(ea.size, std::format("{} + {} + {}", Code::an(ea.xn), Code::dn(0), ea.index), value);
+            break;
         }
 
         case AddressingMode::AbsWord: {
