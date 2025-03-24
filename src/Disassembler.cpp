@@ -3,8 +3,8 @@
 #include "ident.h"
 
 void Disassembler::disassemble() {
-    if (src_.get_pc() == 0x382) {
-        
+    if (src_.get_pc() == 0x1E74) {
+
     }
 
     u16 op = src_.get_next_word();
@@ -473,6 +473,14 @@ void Disassembler::disassemble() {
         u8 xn = (op >> 0) & 0b111;
         auto size = ident::ident_size(s);
         n_->and_(dn, ident::ident_effective_DirectionO(d), size, ident::ident_effective_adr(m, xn), xn);
+    } else if ((op & 0b1111000011000000) == 0b1101000011000000) {
+        // ADDA
+        u8 an = (op >> 9) & 0b111;
+        u8 s = (op >> 8) & 0b1;
+        u8 m = (op >> 3) & 0b111;
+        u8 xn = (op >> 0) & 0b111;
+        auto size = ident::ident_size_bit(s);
+        n_->adda_(an, size, ident::ident_effective_adr(m, xn), xn);
     } else if ((op & 0b1111000000000000) == 0b1101000000000000) {
         // ADD
         u8 d = (op >> 8) & 0b1;
@@ -490,14 +498,6 @@ void Disassembler::disassemble() {
         u8 xn = (op >> 0) & 0b111;
         auto size = ident::ident_size(s);
         n_->addx_(xn_, size, ident::ident_effective_Mode(m), xn);
-    } else if ((op & 0b1111000011000000) == 0b1101000011000000) {
-        // ADDA
-        u8 an = (op >> 9) & 0b111;
-        u8 s = (op >> 8) & 0b1;
-        u8 m = (op >> 3) & 0b111;
-        u8 xn = (op >> 0) & 0b111;
-        auto size = ident::ident_size_bit(s);
-        n_->adda_(an, size, ident::ident_effective_adr(m, xn), xn);
     } else if ((op & 0b1111111011000000) == 0b1110000011000000) {
         // ASd
         u8 d = (op >> 8) & 0b1;

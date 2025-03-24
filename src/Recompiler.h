@@ -30,7 +30,8 @@ struct DecodedEffectiveAddress {
 
 class Recompiler : public IFoundInstructionNotifier {
 public:
-    explicit Recompiler(SourceBinary &src) : src_(src), flow_(src) {}
+    explicit Recompiler(SourceBinary &src, RecompilerFlow& flow)
+        : src_(src), flow_(flow) {}
 
     void ori_to_ccr(u8 data) override;
     void ori_to_sr(u16 data) override;
@@ -54,8 +55,7 @@ public:
     void bset_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) override;
     void movep(u8 dn, DirectionR d, Size s, u8 an, u16 displacement) override;
     void movea(Size s, u8 an, AddressingMode m, u8 xn) override;
-    void move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode dst_m,
-              u8 dst_xn) override;
+    void move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode dst_m, u8 dst_xn) override;
     void move_from_sr(AddressingMode m, u8 xn) override;
     void move_to_ccr(AddressingMode m, u8 xn) override;
     void move_to_sr(AddressingMode m, u8 xn) override;
@@ -84,8 +84,7 @@ public:
     void rtr() override;
     void jsr(AddressingMode m, u8 xn) override;
     void jmp(AddressingMode m, u8 xn) override;
-    void movem(DirectionR d, Size s, AddressingMode m, u8 xn,
-               u16 reg_mask) override;
+    void movem(DirectionR d, Size s, AddressingMode m, u8 xn, u16 reg_mask) override;
     void lea(u8 an, AddressingMode m, u8 xn) override;
     void chk(u8 dn, AddressingMode m, u8 xn) override;
     void addq(u8 data, Size s, AddressingMode m, u8 xn) override;
@@ -120,14 +119,10 @@ public:
     void lsd(RotationDirection d, AddressingMode m, u8 xn) override;
     void rox(RotationDirection d, AddressingMode m, u8 xn) override;
     void rod(RotationDirection d, AddressingMode m, u8 xn) override;
-    void asd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m,
-                      u8 dn) override;
-    void lsd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m,
-                      u8 dn) override;
-    void rox_rotation(u8 rotation, RotationDirection d, Size s, Rotation m,
-                      u8 dn) override;
-    void rod_rotation(u8 rotation, RotationDirection d, Size s, Rotation m,
-                      u8 dn) override;
+    void asd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) override;
+    void lsd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) override;
+    void rox_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) override;
+    void rod_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) override;
 
     void write_all_to_file();
 
@@ -147,16 +142,16 @@ private:
     std::tuple<std::string, std::string, std::string>
     fmt_set_value(const DecodedEffectiveAddress &ea, const std::string &value);
 
-    DecodedEffectiveAddress decode_ea(Size s, AddressingMode m, u8 xn,
-                                      u8 src_xn = 0xFF);
+    DecodedEffectiveAddress decode_ea(Size s, AddressingMode m, u8 xn, u8 src_xn = 0xFF);
 
     std::string make_condition(Condition c);
 
-    void call_function(u32 dst_adr, std::string pre = "",
-                       std::string post = "");
+    void call_function(u32 dst_adr, std::string pre = "", std::string post = "");
+
+    void call_xn_function(u32 pc, u32 dst_adr, std::string pre = "", std::string post = "");
 
     SourceBinary &src_;
-    RecompilerFlow flow_;
+    RecompilerFlow& flow_;
 };
 
-#endif // __CLIONPROJECTS_M68K_DISASSEMBLER_SRC_RECOMPILER_H_
+#endif// __CLIONPROJECTS_M68K_DISASSEMBLER_SRC_RECOMPILER_H_

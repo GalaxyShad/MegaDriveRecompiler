@@ -149,7 +149,6 @@ void Recompiler::movea(Size s, u8 an, AddressingMode m, u8 xn) {
 }
 
 void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode dst_m, u8 dst_xn) {
-
     auto src_ea = decode_ea(s, src_m, src_xn, dst_xn);
     auto dst_ea = decode_ea(s, dst_m, dst_xn);
 
@@ -279,7 +278,43 @@ void Recompiler::rtr() {
 }
 
 void Recompiler::jsr(AddressingMode m, u8 xn) {
-    NOT_IMPLEMENTED
+    auto ea = decode_ea(Size::Word, m, xn);
+
+    switch (m) {
+        case AddressingMode::Address:
+        case AddressingMode::AddressWithDisplacement:
+        case AddressingMode::AddressWithIndex: {
+            NOT_IMPLEMENTED;
+            break;
+        }
+
+        case AddressingMode::AbsWord: {
+            call_function(ea.abs_word_adr);
+            break;
+        }
+
+        case AddressingMode::AbsLong: {
+            call_function(ea.abs_long_adr);
+            break;
+        }
+
+        case AddressingMode::PcWithDisplacement: {
+            NOT_IMPLEMENTED
+            break;
+        }
+        case AddressingMode::PcWithIndex: {
+            call_xn_function(src_.get_pc()-4, ea.pc_with_index);
+            break;
+        }
+
+        case AddressingMode::DataRegister:
+        case AddressingMode::AddressRegister:
+        case AddressingMode::AddressWithPreDecrement:
+        case AddressingMode::AddressWithPostIncrement:
+        case AddressingMode::Immediate: {
+            throw std::invalid_argument("invalid addressing mode");
+        }
+    }
 }
 
 void Recompiler::jmp(AddressingMode m, u8 xn) {
@@ -489,7 +524,13 @@ void Recompiler::addx_(u8 xn, Size s, Mode m, u8 xn2) {
 }
 
 void Recompiler::adda_(u8 an, Size s, AddressingMode m, u8 xn) {
-    NOT_IMPLEMENTED
+    auto ea = decode_ea(s, m, xn, an);
+
+    auto [pre, src, post] = fmt_get_value(ea);
+
+    auto res = std::format("{} += {};", Code::an(an), src);
+
+    flow_.ctx().writeln(pre + res + post + " // adda");
 }
 
 void Recompiler::asd(RotationDirection d, AddressingMode m, u8 xn) {
@@ -713,6 +754,36 @@ void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post) {
     } else if (!flow_.program().contains(dst_adr)) {
         flow_.add_routine(dst_adr);
         flow_.jmp(dst_adr);
+    }
+}
+
+void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string pre, std::string post) {
+    auto& xn_list = flow_.get_xn_list_for_adr(pc);
+
+    flow_.ctx().writeln("switch () {");
+    for (auto& i : xn_list) {
+        u32 adr = dst_adr + i;
+
+        auto fn_name = flow_.get_name_for_label(adr);
+
+        if (!flow_.program().contains(adr)) {
+            flow_.add_routine(adr);
+        }
+
+        flow_.ctx().writeln(std::format("case {}: {} break;", Code::imm(i), pre + Code::call_function(fn_name) + post));
+    }
+    flow_.ctx().writeln("}");
+
+    for (auto& i : xn_list) {
+        u32 adr = dst_adr + i;
+
+        if (flow_.ctx().adr == adr) {
+            flow_.ret();
+        } else if (flow_.program().contains(adr)) {
+            // flow_.add_routine(adr);
+            flow_.jmp(adr);
+            break; // FIXME
+        }
     }
 }
 

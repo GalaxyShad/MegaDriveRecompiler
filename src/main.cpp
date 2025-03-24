@@ -15,9 +15,17 @@ auto main() -> int {
 
     SourceBinary binary("./build/s1built.bin");
 
+    std::unordered_map<u32, std::vector<i32>> known_xn_values = {
+        {0x390, {0x00, 0x04, 0x08, 0x0C, 0x10, 0x14, 0x18, 0x1C}}
+    };
+
     binary.set_pc(game_init_adr);
 
-    Recompiler recomp(binary);
+    RecompilerFlow flow(binary);
+
+    flow.add_known_xn_values(known_xn_values);
+
+    Recompiler recomp(binary, flow);
     Disassembler disasm(binary, &recomp);
 
     while (1) {
