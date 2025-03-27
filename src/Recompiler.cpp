@@ -201,8 +201,6 @@ void Recompiler::move_to_ccr(AddressingMode m, u8 xn) {
 }
 
 void Recompiler::move_to_sr(AddressingMode m, u8 xn) {
-    // TODO
-
     auto ea = decode_ea(Size::Word, m, xn);
 
     auto [pre, res, post] = fmt_get_value(ea);
@@ -444,8 +442,7 @@ void Recompiler::dbcc(Condition c, u8 dn, u16 displacement) {
     i16 d = displacement;
     u32 dst_adr = src_.get_pc() + d - 2;
 
-    flow_.ctx().writeln(Code::dn(dn) + "--;");
-    call_function(dst_adr, std::format("if ({} != -1) ", Code::dn(dn)));
+    call_function(dst_adr, std::format("{}--; if ({} != -1) ", Code::dn(dn), Code::dn(dn)), " // dbcc");
 }
 
 void Recompiler::bra(u8 displacement) {
