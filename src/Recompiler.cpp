@@ -264,7 +264,33 @@ void Recompiler::jsr(AddressingMode m, u8 xn) {
 
 void Recompiler::jmp(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
-void Recompiler::movem(DirectionR d, Size s, AddressingMode m, u8 xn, u16 reg_mask) { NOT_IMPLEMENTED }
+void Recompiler::movem(DirectionR d, Size s, AddressingMode m, u8 xn, u16 reg_mask) { ///
+    // NOT_IMPLEMENTED
+    auto [pre, src, post] = get_value(s, m, xn);
+    std::string val, dst;
+
+    if (d == DirectionR::RegisterToMemory) {
+        for(u8 i=0; i<16; i++){
+            if(((reg_mask >> (15 - i)) & 0b1) == 0) continue;
+            if(i<8)
+                val = Code::deref_adr(s,Code::an(7-i));
+            else
+                val = Code::deref_adr(s,Code::dn(15-i));
+            dst = Code::set_adr(Size::Long, src, val);
+            flow_.ctx().writeln(pre + dst + post + "// movem reg to mem");
+        }
+    } else if(d == DirectionR::MemoryToRegister){
+        for(u8 i=0; i<16; i++){
+            if(((reg_mask >> (15 - i)) & 0b1) == 0) continue;
+            val = Code::deref_adr(s,src);
+            if(i<8)
+                dst = Code::set_adr(Size::Long,Code::dn(i), val);
+            else
+                dst = Code::set_adr(Size::Long,Code::an(i - 8), val);
+            flow_.ctx().writeln(pre + dst + post + "// movem mem to reg");
+        }
+    }
+}
 
 void Recompiler::lea(u8 an, AddressingMode m, u8 xn) {
     std::string src;
