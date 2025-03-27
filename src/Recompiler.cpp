@@ -453,7 +453,7 @@ void Recompiler::bra(u8 displacement) {
 
     u32 dst_adr = src_.get_pc() + displ;
 
-    call_function(dst_adr, "", " return;");
+    call_function(dst_adr, "", " return; // bra");
 }
 
 void Recompiler::bsr(u8 displacement) {
@@ -464,7 +464,7 @@ void Recompiler::bsr(u8 displacement) {
 
     u32 dst_adr = src_.get_pc() + displ;
 
-    call_function(dst_adr);
+    call_function(dst_adr, "", " // bsr");
 }
 
 void Recompiler::bcc(Condition c, u8 displacement) {
