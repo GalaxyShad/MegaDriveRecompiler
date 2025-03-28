@@ -336,7 +336,9 @@ void Recompiler::lea(u8 an, AddressingMode m, u8 xn) {
             NOT_IMPLEMENTED
         }
         case AddressingMode::AddressWithIndex: {
-            NOT_IMPLEMENTED
+            i16 index = src_.get_next_word();
+            src = std::format("{} + {} + {}", Code::an(xn), Code::dn(0), index); 
+            break;
         }
         case AddressingMode::AbsWord: {
             u16 w = src_.get_next_word();
@@ -488,7 +490,12 @@ void Recompiler::subx_(u8 xn, Size s, Mode m, u8 xn2) { NOT_IMPLEMENTED }
 
 void Recompiler::suba_(u8 an, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
-void Recompiler::eor_(u8 dn, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::eor_(u8 dn, Size s, AddressingMode m, u8 xn) { 
+    auto [spre, sres, spost] = get_value(s, m, xn, dn);
+    auto [dpre, dres, dpost] = upd_value(s, AddressingMode::DataRegister, dn, std::format(" ^ {}", sres));
+
+    flow_.ctx().writeln(spre + dpre + dres + dpost + spost + " // eor");
+}
 
 void Recompiler::cmpm_(u8 an, Size s, u8 an2) { NOT_IMPLEMENTED }
 
@@ -504,7 +511,19 @@ void Recompiler::abcd(u8 xn, Mode m, u8 xn2) { NOT_IMPLEMENTED }
 
 void Recompiler::exg(u8 rx, u8 opmode, u8 ry) { NOT_IMPLEMENTED }
 
-void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { 
+    if (d != DirectionO::Dn_x_ea_to_Dn) {
+        // TODO
+        NOT_IMPLEMENTED
+    }
+
+    // TODO flags
+
+    auto [spre, sres, spost] = get_value(s, m, xn, dn);
+    auto [dpre, dres, dpost] = upd_value(s, AddressingMode::DataRegister, dn, std::format(" & {}", sres));
+
+    flow_.ctx().writeln(spre + dpre + dres + dpost + spost + " // and");
+}
 
 void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
     if (d != DirectionO::Dn_x_ea_to_Dn) {
