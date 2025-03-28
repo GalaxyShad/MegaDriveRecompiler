@@ -6,6 +6,7 @@
 #include <format>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 static void not_impl_(const std::string &fname, RecompilerFlow &flow) {
     RecompilerSourceGenerator gen(flow);
@@ -134,18 +135,52 @@ void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode ds
 }
 
 void Recompiler::move_from_sr(AddressingMode m, u8 xn) {
-    // TODO
-    flow_.ctx().writeln(std::format("// {} at {:X}", __func__, src_.get_pc()));
+    auto ea = decode_ea(Size::Word, m, xn);
+
+    auto r = 
+        " ctx->res = (ctx->cc.c << 0) "
+        "| (ctx->cc.v << 1) "
+        "| (ctx->cc.z << 2) "
+        "| (ctx->cc.n << 3) "
+        "| (ctx->cc.x << 4); ";
+
+    auto [pre, res, post] = fmt_set_value(ea, "ctx->res");
+    
+    flow_.ctx().writeln(pre + r + res + post + " // move from sr");
 }
 
 void Recompiler::move_to_ccr(AddressingMode m, u8 xn) {
-    // TODO
-    flow_.ctx().writeln(std::format("// {} at {:X}", __func__, src_.get_pc()));
+    auto ea = decode_ea(Size::Word, m, xn);
+
+    auto [pre, res, post] = fmt_get_value(ea);
+
+    auto r = pre + std::format("ctx->res = {};", res) + post;
+
+    std::string flags = 
+        "ctx->cc.c = (ctx->res >> 0) & 1; " 
+        "ctx->cc.v = (ctx->res >> 1) & 1; "
+        "ctx->cc.z = (ctx->res >> 2) & 1; "
+        "ctx->cc.n = (ctx->res >> 3) & 1; "
+        "ctx->cc.x = (ctx->res >> 4) & 1;";
+
+    flow_.ctx().writeln(r + " " + flags + " // move to ccr");
 }
 
 void Recompiler::move_to_sr(AddressingMode m, u8 xn) {
-    // TODO
-    flow_.ctx().writeln(std::format("// {} at {:X}", __func__, src_.get_pc()));
+    auto ea = decode_ea(Size::Word, m, xn);
+
+    auto [pre, res, post] = fmt_get_value(ea);
+
+    auto r = pre + std::format("ctx->res = {};", res) + post;
+
+    std::string flags = 
+        "ctx->cc.c = (ctx->res >> 0) & 1; " 
+        "ctx->cc.v = (ctx->res >> 1) & 1; "
+        "ctx->cc.z = (ctx->res >> 2) & 1; "
+        "ctx->cc.n = (ctx->res >> 3) & 1; "
+        "ctx->cc.x = (ctx->res >> 4) & 1;";
+
+    flow_.ctx().writeln(r + " " + flags + " // move to sr");
 }
 
 void Recompiler::negx(Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
@@ -358,8 +393,7 @@ void Recompiler::dbcc(Condition c, u8 dn, u16 displacement) {
     i16 d = displacement;
     u32 dst_adr = src_.get_pc() + d - 2;
 
-    flow_.ctx().writeln(Code::dn(dn) + "--;");
-    call_function(dst_adr, std::format("if ({} != -1) ", Code::dn(dn)));
+    call_function(dst_adr, std::format("{}--; if ({} != -1) ", Code::dn(dn), Code::dn(dn)), " // dbcc");
 }
 
 void Recompiler::bra(u8 displacement) {
@@ -370,7 +404,7 @@ void Recompiler::bra(u8 displacement) {
 
     u32 dst_adr = src_.get_pc() + displ;
 
-    call_function(dst_adr, "", " return;");
+    call_function(dst_adr, "", " return; // bra");
 }
 
 void Recompiler::bsr(u8 displacement) {
@@ -381,7 +415,7 @@ void Recompiler::bsr(u8 displacement) {
 
     u32 dst_adr = src_.get_pc() + displ;
 
-    call_function(dst_adr);
+    call_function(dst_adr, "", " // bsr");
 }
 
 void Recompiler::bcc(Condition c, u8 displacement) {
