@@ -33,7 +33,7 @@ namespace ident {
         }
     }
 
-    Condition ident_effective_Condition(u8 c) {
+    Condition ident_condition(u8 c) {
         switch (c) {
             case 0b0000: return Condition::True;
             case 0b0001: return Condition::False;
@@ -85,7 +85,7 @@ namespace ident {
         }
     }
 
-    DirectionR ident_effective_DirectionR(u8 d) {
+    DirectionR ident_directionR(u8 d) {
         switch (d) {
             case 0b0: return DirectionR::RegisterToMemory;
             case 0b1: return DirectionR::MemoryToRegister;
@@ -93,7 +93,7 @@ namespace ident {
         };
     }
 
-    DirectionO ident_effective_DirectionO(u8 d) {
+    DirectionO ident_directionO(u8 d) {
         switch (d) {
             case 0b0: return DirectionO::Dn_x_ea_to_Dn;
             case 0b1: return DirectionO::ea_x_Dn_to_ea;
@@ -101,7 +101,7 @@ namespace ident {
         };
     }
 
-    RotationDirection ident_effective_RotationDirection(u8 d) {
+    RotationDirection ident_rotationDirection(u8 d) {
         switch (d) {
             case 0b0: return RotationDirection::Left;
             case 0b1: return RotationDirection::Right;
@@ -109,7 +109,7 @@ namespace ident {
         };
     }
 
-    Rotation ident_effective_Rotation(u8 m) {
+    Rotation ident_rotation(u8 m) {
         switch (m) {
             case 0b0: return Rotation::Immediate;
             case 0b1: return Rotation::Register;
@@ -117,7 +117,7 @@ namespace ident {
         };
     }
 
-    Mode ident_effective_Mode(u8 m) {
+    Mode ident_mode(u8 m) {
         switch (m) {
             case 0b0: return Mode::DataRegister;
             case 0b1: return Mode::AddressWithPreDecrement;
