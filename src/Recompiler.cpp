@@ -272,7 +272,7 @@ void Recompiler::movem(DirectionR d, Size s, AddressingMode m, u8 xn, u16 reg_ma
             if(i<8)
                 val = Code::deref_adr(s,Code::an(7-i));
             else
-                val = Code::deref_adr(s,Code::dn(15-i));
+                val = Code::dn(15-i);
             dst = Code::set_adr(Size::Long, src, val);
             flow_.ctx().writeln(pre + dst + post + "// movem reg to mem");
         }
@@ -498,7 +498,19 @@ void Recompiler::adda_(u8 an, Size s, AddressingMode m, u8 xn) {
     flow_.ctx().writeln(pre + res + post + " // adda");
 }
 
-void Recompiler::asd(RotationDirection d, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::asd(RotationDirection d, AddressingMode m, u8 xn) {
+    auto [pre, res, post] = upd_value(Size::Word, m, xn,"");
+  
+    std::string op = d == RotationDirection::Left ? "<<" : ">>";
+    std::string flag_c = std::format("ctx->res = {}; ctx->cc.c = {}; ctx->cc.x = ctx->cc.c; {} {}= 1;", res, d == RotationDirection::Left ? std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(Size::Word)) : "ctx->res & 0b1", res, op);
+    if(d == RotationDirection::Left)
+                flag_c = flag_c + "ctx->cc.n = (ctx->res < 0); ";
+    else
+                flag_c = "ctx->cc.n = (ctx->res < 0); " + flag_c + std::format(" if(ctx->cc.n) {} -= 1 << (sizeof({}) * 8 - 1); ", res, Code::get_sizeof_size(Size::Word));
+    std::string flags =  std::format("ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0;");
+  
+    flow_.ctx().writeln(pre + res + flag_c + flags + post + " // asd ");
+}
 
 void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {///
     auto [pre, res, post] = upd_value(Size::Word, m, xn,"");
@@ -524,7 +536,28 @@ void Recompiler::rod(RotationDirection d, AddressingMode m, u8 xn) { ///
     flow_.ctx().writeln(pre + res + flag_c + flags + post + " // rod ");
 }
 
-void Recompiler::asd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) { NOT_IMPLEMENTED }
+void Recompiler::asd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) {///
+    std::string count_shift;
+    if (m == Rotation::Immediate)
+        count_shift = std::format("({} - 1)", rotation ? rotation : 8);
+    else {
+        if(s == Size::Long)
+            count_shift = std::format("({} - 1)", Code::dn(rotation));
+        else
+            count_shift = std::format("(({} - 1) % 64)", Code::dn(rotation));
+    }
+
+    std::string op = d == RotationDirection::Left ? "<<" : ">>";
+    std::string res = std::format("{} {}= {}; ", Code::dn(dn), op, count_shift);
+    std::string flag_c = std::format("ctx->res = {}; ctx->cc.c = {}; ctx->cc.x = ctx->cc.c; {} {}= 1;", Code::dn(dn), d == RotationDirection::Left ? std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(s)) : "ctx->res & 0b1", Code::dn(dn), op);
+    if(d == RotationDirection::Left)
+                flag_c = flag_c + "ctx->cc.n = (ctx->res < 0); ";
+    else
+                flag_c = "ctx->cc.n = (ctx->res < 0); " + flag_c + std::format(" if(ctx->cc.n) {} -= 1 << (sizeof({}) * 8 - 1 - {}); ", Code::dn(dn), Code::get_sizeof_size(s), count_shift);
+    std::string flags =  std::format("ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0;");
+
+    flow_.ctx().writeln(res + flag_c + flags + std::format(" // asd_rotation {}",rotation));
+}
 
 void Recompiler::lsd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) {///
     std::string count_shift;
@@ -570,12 +603,12 @@ void Recompiler::rox_rotation(u8 rotation, RotationDirection d, Size s, Rotation
 void Recompiler::rod_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) { ///
     std::string count_shift;
     if (m == Rotation::Immediate)
-        count_shift = std::format("({} - 1)", rotation ? rotation : 8);
+        count_shift = std::format("{}", rotation ? rotation : 8);
     else {
         if(s == Size::Long)
-            count_shift = std::format("({} - 1)", Code::dn(rotation));
+            count_shift = std::format("{}", Code::dn(rotation));
         else
-            count_shift = std::format("(({} - 1) % 64)", Code::dn(rotation));
+            count_shift = std::format("({} % 64)", Code::dn(rotation));
     }
   
     std::string op = d == RotationDirection::Left ? "<<" : ">>";
