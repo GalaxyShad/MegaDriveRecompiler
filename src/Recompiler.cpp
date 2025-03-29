@@ -294,7 +294,48 @@ void Recompiler::jsr(AddressingMode m, u8 xn) {
     }
 }
 
-void Recompiler::jmp(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::jmp(AddressingMode m, u8 xn) { 
+    auto ea = decode_ea(Size::Word, m, xn);
+
+    switch (m) {
+        case AddressingMode::Address: {
+            call_xn_function(src_.get_pc()-2, 0, Code::an(xn), "", " return;");
+            break;
+        }
+        case AddressingMode::AddressWithDisplacement:
+        case AddressingMode::AddressWithIndex: {
+            NOT_IMPLEMENTED;
+            break;
+        }
+
+        case AddressingMode::AbsWord: {
+            call_function(ea.abs_word_adr, "", " return;");
+            break;
+        }
+
+        case AddressingMode::AbsLong: {
+            call_function(ea.abs_long_adr, "", " return;");
+            break;
+        }
+
+        case AddressingMode::PcWithDisplacement: {
+            NOT_IMPLEMENTED
+            break;
+        }
+        case AddressingMode::PcWithIndex: {
+            call_xn_function(src_.get_pc()-4, ea.pc_with_index, Code::dn(0), "", " return;");
+            break;
+        }
+
+        case AddressingMode::DataRegister:
+        case AddressingMode::AddressRegister:
+        case AddressingMode::AddressWithPreDecrement:
+        case AddressingMode::AddressWithPostIncrement:
+        case AddressingMode::Immediate: {
+            throw std::invalid_argument("invalid addressing mode");
+        }
+    }
+}
 
 void Recompiler::movem(DirectionR d, Size s, AddressingMode m, u8 xn, u16 reg_mask) { ///
     // NOT_IMPLEMENTED
@@ -499,7 +540,27 @@ void Recompiler::eor_(u8 dn, Size s, AddressingMode m, u8 xn) {
 
 void Recompiler::cmpm_(u8 an, Size s, u8 an2) { NOT_IMPLEMENTED }
 
-void Recompiler::cmp_(u8 dn, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::cmp_(u8 dn, Size s, AddressingMode m, u8 xn) { 
+    auto ea = decode_ea(s, m, xn);
+
+    auto [pre, src, post] = fmt_get_value(ea);
+
+    auto dst = Code::dn(dn);
+
+    auto res = std::format("ctx->res = {} - {};", dst, src);
+
+    auto flags = std::format(" "
+        "ctx->cc.n = (ctx->res < 0); "
+        "ctx->cc.z = (ctx->res == 0); "
+        "ctx->cc.v = (({0} ^ {1}) & ({0} ^ ctx->res)) & (1 << {2}); "  // V
+        "ctx->cc.c = ((u{3}){0} < (u{3}){1});",                     // C
+        dst, src, 
+        (s == Size::Byte ? 7 : (s == Size::Word ? 15 : 31)),            
+        (s == Size::Byte ? "8" : (s == Size::Word ? "16" : "32"))
+    );
+
+    flow_.ctx().writeln(pre + res + flags + post);
+}
 
 void Recompiler::cmpa_(u8 an, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 

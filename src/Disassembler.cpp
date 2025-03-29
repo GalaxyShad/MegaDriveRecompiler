@@ -3,7 +3,7 @@
 #include "ident.h"
 
 void Disassembler::disassemble() {
-    if (src_.get_pc() == 0x1578) {
+    if (src_.get_pc() == 0x2E16) {
 
     }
 
