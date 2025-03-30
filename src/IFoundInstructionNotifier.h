@@ -76,7 +76,7 @@ struct IFoundInstructionNotifier {
     virtual void sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) = 0;
     virtual void subx_(u8 xn, Size s, Mode m, u8 xn2) = 0;
     virtual void suba_(u8 an, Size s, AddressingMode m, u8 xn) = 0;
-    virtual void eor_(u8 dn, Size s, AddressingMode m, u8 xn) = 0;
+    virtual void eor_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) = 0;
     virtual void cmpm_(u8 an, Size s, u8 an2) = 0;
     virtual void cmp_(u8 dn, Size s, AddressingMode m, u8 xn) = 0;
     virtual void cmpa_(u8 an, Size s, AddressingMode m, u8 xn) = 0;

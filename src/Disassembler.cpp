@@ -375,8 +375,8 @@ void Disassembler::disassemble() {
         n_->sbcd(xn_, ident::ident_mode(m), xn);
     } else if ((op & 0b1111000000000000) == 0b1000000000000000) {
         // OR
-        u8 d = (op >> 8) & 0b1;
         u8 dn = (op >> 9) & 0b111;
+        u8 d = (op >> 8) & 0b1;
         u8 s = (op >> 6) & 0b11;
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
@@ -384,8 +384,8 @@ void Disassembler::disassemble() {
         n_->or_(dn, ident::ident_directionO(d), size, ident::ident_effective_adr(m, xn), xn);
     } else if ((op & 0b1111000000000000) == 0b1001000000000000) {
         // SUB
-        u8 d = (op >> 8) & 0b1;
         u8 dn = (op >> 9) & 0b111;
+        u8 d = (op >> 8) & 0b1;
         u8 s = (op >> 6) & 0b11;
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
@@ -410,11 +410,12 @@ void Disassembler::disassemble() {
     } else if ((op & 0b1111000100000000) == 0b1011000100000000) {
         // EOR
         u8 dn = (op >> 9) & 0b111;
+        u8 d = (op >> 8) & 0b1;
         u8 s = (op >> 6) & 0b11;
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
         auto size = ident::ident_size(s);
-        n_->eor_(dn, size, ident::ident_effective_adr(m, xn), xn);
+        n_->eor_(dn, ident::ident_directionO(d), size, ident::ident_effective_adr(m, xn), xn);
     } else if ((op & 0b1111000100111000) == 0b1011000100001000) {
         // CMPM
         u8 an_ = (op >> 9) & 0b111;
@@ -466,8 +467,8 @@ void Disassembler::disassemble() {
         // n_->exg(rx, opmode, ry);
     } else if ((op & 0b1111000000000000) == 0b1100000000000000) {
         // AND
-        u8 d = (op >> 8) & 0b1;
         u8 dn = (op >> 9) & 0b111;
+        u8 d = (op >> 8) & 0b1;
         u8 s = (op >> 6) & 0b11;
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
@@ -483,8 +484,8 @@ void Disassembler::disassemble() {
         n_->adda_(an, size, ident::ident_effective_adr(m, xn), xn);
     } else if ((op & 0b1111000000000000) == 0b1101000000000000) {
         // ADD
-        u8 d = (op >> 8) & 0b1;
         u8 dn = (op >> 9) & 0b111;
+        u8 d = (op >> 8) & 0b1;
         u8 s = (op >> 6) & 0b11;
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;

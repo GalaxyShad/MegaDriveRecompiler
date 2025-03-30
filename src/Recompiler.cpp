@@ -199,7 +199,6 @@ void Recompiler::neg(Size s, AddressingMode m, u8 xn) {
 void Recompiler::not_(Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 void Recompiler::ext(Size s, u8 dn) { ///
-    // NOT_IMPLEMENTED
     std::string res = std::format("{} = (0xFFFF{} * ({} >> (sizeof({}) * 8 - 1))) - (((sizeof({}) * 8) << 1) - 1) | {};", Code::dn(dn), s == Size::Byte ? "" : "FFFF", Code::dn(dn), Code::get_sizeof_size(s), Code::get_sizeof_size(s), Code::dn(dn));
     std::string flags =  std::format("ctx->res = {}; ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;", Code::dn(dn));
     flow_.ctx().writeln(res + flags + "// ext");
@@ -455,18 +454,22 @@ void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) { ///
 
 void Recompiler::sbcd(u8 xn, Mode m, u8 xn2) { NOT_IMPLEMENTED }
 
-void Recompiler::or_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
-    if (d != DirectionO::Dn_x_ea_to_Dn) {
-        // TODO
-        NOT_IMPLEMENTED
+void Recompiler::or_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { ///
+    auto dn_dec = decode_ea(s, m, xn, dn);
+    auto ea_dec = decode_ea(s, AddressingMode::DataRegister, dn);
+
+    auto [dn_pre, dn_res, dn_post] = fmt_get_value(dn_dec);
+    auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
+
+    if (d == DirectionO::ea_x_Dn_to_ea) {
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, ea_res + std::format(" | {}", dn_res));
+        std::string flags =  std::format("ctx->res = {}; ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;", dst_res);
+        flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // or to ea");
+    } else {
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" | {}", dn_res));
+        std::string flags =  std::format("ctx->res = {}; ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;", dst_res);
+        flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // or to dn");
     }
-
-    // TODO flags
-
-    auto [spre, sres, spost] = get_value(s, m, xn, dn);
-    auto [dpre, dres, dpost] = upd_value(s, AddressingMode::DataRegister, dn, std::format(" | {}", sres));
-
-    flow_.ctx().writeln(spre + dpre + dres + dpost + spost + " // or");
 }
 
 void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
@@ -488,7 +491,23 @@ void Recompiler::subx_(u8 xn, Size s, Mode m, u8 xn2) { NOT_IMPLEMENTED }
 
 void Recompiler::suba_(u8 an, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
-void Recompiler::eor_(u8 dn, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::eor_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { ///
+    auto dn_dec = decode_ea(s, m, xn, dn);
+    auto ea_dec = decode_ea(s, AddressingMode::DataRegister, dn);
+
+    auto [dn_pre, dn_res, dn_post] = fmt_get_value(dn_dec);
+    auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
+
+    if (d == DirectionO::ea_x_Dn_to_ea) {
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, ea_res + std::format(" ^ {}", dn_res));
+        std::string flags =  std::format("ctx->res = {}; ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;", dst_res);
+        flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // eor to ea");
+    } else {
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" ^ {}", dn_res));
+        std::string flags =  std::format("ctx->res = {}; ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;", dst_res);
+        flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // eor to dn");
+    }
+}
 
 void Recompiler::cmpm_(u8 an, Size s, u8 an2) { NOT_IMPLEMENTED }
 
@@ -504,7 +523,23 @@ void Recompiler::abcd(u8 xn, Mode m, u8 xn2) { NOT_IMPLEMENTED }
 
 void Recompiler::exg(u8 rx, u8 opmode, u8 ry) { NOT_IMPLEMENTED }
 
-void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
+void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { ///
+    auto dn_dec = decode_ea(s, m, xn, dn);
+    auto ea_dec = decode_ea(s, AddressingMode::DataRegister, dn);
+
+    auto [dn_pre, dn_res, dn_post] = fmt_get_value(dn_dec);
+    auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
+
+    if (d == DirectionO::ea_x_Dn_to_ea) {
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, ea_res + std::format(" & {}", dn_res));
+        std::string flags =  std::format("ctx->res = {}; ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;", dst_res);
+        flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // and to ea");
+    } else {
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" & {}", dn_res));
+        std::string flags =  std::format("ctx->res = {}; ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0; ctx->cc.c = 0;", dst_res);
+        flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // and to dn");
+    }
+}
 
 void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
     if (d != DirectionO::Dn_x_ea_to_Dn) {

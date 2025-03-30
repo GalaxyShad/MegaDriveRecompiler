@@ -102,7 +102,7 @@ public:
     void sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) override;
     void subx_(u8 xn, Size s, Mode m, u8 xn2) override;
     void suba_(u8 an, Size s, AddressingMode m, u8 xn) override;
-    void eor_(u8 dn, Size s, AddressingMode m, u8 xn) override;
+    void eor_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) override;
     void cmpm_(u8 an, Size s, u8 an2) override;
     void cmp_(u8 dn, Size s, AddressingMode m, u8 xn) override;
     void cmpa_(u8 an, Size s, AddressingMode m, u8 xn) override;
