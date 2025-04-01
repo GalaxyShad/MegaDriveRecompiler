@@ -138,7 +138,7 @@ void Recompiler::move_from_sr(AddressingMode m, u8 xn) {
     auto ea = decode_ea(Size::Word, m, xn);
 
     auto r = 
-        " ctx->res = (ctx->cc.c << 0) "
+        "ctx->res = (ctx->cc.c << 0) "
         "| (ctx->cc.v << 1) "
         "| (ctx->cc.z << 2) "
         "| (ctx->cc.n << 3) "
@@ -638,7 +638,7 @@ void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {///
     auto [pre, res, post] = upd_value(Size::Word, m, xn,"");
   
     std::string op = d == RotationDirection::Left ? "<<" : ">>";
-    std::string flag_c = std::format("ctx->res = {}; ctx->cc.c = {}; ctx->cc.x = ctx->cc.c; {} {}= 1;", res, d == RotationDirection::Left ? std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(Size::Word)) : "ctx->res & 0b1", res, op);
+    std::string flag_c = std::format("ctx->res = {}; ctx->cc.c = {}; ctx->cc.x = ctx->cc.c; {} {}= 1; ", res, d == RotationDirection::Left ? std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(Size::Word)) : "ctx->res & 0b1", res, op);
     std::string flags =  std::format("ctx->cc.n = (ctx->res < 0); ctx->cc.z = (ctx->res == 0); ctx->cc.v = 0;");
   
     flow_.ctx().writeln(pre + res + flag_c + flags + post + " // lsd ");
@@ -750,7 +750,7 @@ void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post, b
 
     flow_.ctx().writeln(pre + Code::call_function(fn_name) + post);
 
-    if (flow_.ctx().adr == dst_adr) {
+    if (flow_.ctx().adr == dst_adr || (flow_.program().contains(dst_adr) && exit_on_return)) {
         flow_.ret();
     } else if (!flow_.program().contains(dst_adr)) {
         flow_.add_routine(dst_adr);
