@@ -547,7 +547,7 @@ void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { //
         std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dst_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // and to ea");
     } else {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" & {}", dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" & {}", ea_res));
         std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dst_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // and to dn");
     }
