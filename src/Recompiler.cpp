@@ -512,7 +512,7 @@ void Recompiler::or_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { ///
     }
 }
 
-void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { ////-
+void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { ///
     auto dn_dec = decode_ea(s, m, xn, dn);
     auto ea_dec = decode_ea(s, AddressingMode::DataRegister, dn);
 
@@ -523,9 +523,9 @@ void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { //
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} - {}", ea_res, dn_res));
         
         dst_pre += std::format("RES({})",ea_res);
-        std::string flag_cv = std::format( ""
-            // "ctx->cc.v=(({1}^{2})&({2}^ctx->res)&(1<<{3})); "
-            // "ctx->cc.c=(({4}){0}-({4}){}); "
+        std::string flag_cv = std::format(
+            "ctx->cc.v=({1}^{2})&({2}^ctx->res)&(1<<{3}); "
+            "ctx->cc.c=({4}){2}<({4}){0}; "
         , ea_res, dn_res, dst_res, Code::get_u8_sizeof_size(s)-1, Code::get_sizeof_size(s));
 
         std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", dst_res);
@@ -534,9 +534,9 @@ void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { //
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} - {}", ea_res, dn_res));
         
         dst_pre += std::format("RES({})",dn_res);
-        std::string flag_cv = std::format(""
-            // "ctx->cc.v=(({0}^{2})&({2}^ctx->res)&(1<<{3})); "
-            // "ctx->cc.c=(({4}){2}<({4}){1}); "
+        std::string flag_cv = std::format(
+            "ctx->cc.v=({0}^{2})&({2}^ctx->res)&(1<<{3}); "
+            "ctx->cc.c=({4}){2}<({4}){1}; "
         , ea_res, dn_res, dst_res, Code::get_u8_sizeof_size(s)-1, Code::get_sizeof_size(s));
 
         std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", dst_res);
@@ -618,7 +618,7 @@ void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { //
     }
 }
 
-void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { ////-
+void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { ///
     auto dn_dec = decode_ea(s, m, xn, dn);
     auto ea_dec = decode_ea(s, AddressingMode::DataRegister, dn);
 
@@ -629,9 +629,9 @@ void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { //
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} + {}", ea_res, dn_res));
         
         dst_pre += std::format("RES({})",ea_res);
-        std::string flag_cv = std::format( ""
-            // "ctx->cc.v=(({1}^{2})&({2}^ctx->res)&(1<<{3})); "
-            // "ctx->cc.c=(({4}){0}-({4}){}); "
+        std::string flag_cv = std::format(
+            "ctx->cc.v=({1}^{2})&({2}^ctx->res)&(1<<{3}); "
+            "ctx->cc.c=({4}){2}>({4}){0}; "
         , ea_res, dn_res, dst_res, Code::get_u8_sizeof_size(s)-1, Code::get_sizeof_size(s));
 
         std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", dst_res);
@@ -640,9 +640,9 @@ void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { //
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} + {}", ea_res, dn_res));
         
         dst_pre += std::format("RES({})",dn_res);
-        std::string flag_cv = std::format(""
-            // "ctx->cc.v=(({0}^{2})&({2}^ctx->res)&(1<<{3})); "
-            // "ctx->cc.c=(({4}){2}<({4}){1}); "
+        std::string flag_cv = std::format(
+            "ctx->cc.v=({0}^{2})&({2}^ctx->res)&(1<<{3}); "
+            "ctx->cc.c=({4}){2}>({4}){1}; "
         , ea_res, dn_res, dst_res, Code::get_u8_sizeof_size(s)-1, Code::get_sizeof_size(s));
 
         std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", dst_res);
