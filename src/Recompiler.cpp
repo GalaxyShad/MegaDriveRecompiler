@@ -198,7 +198,7 @@ void Recompiler::neg(Size s, AddressingMode m, u8 xn) {
 void Recompiler::not_(Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 
 void Recompiler::ext(Size s, u8 dn) { ///
-    std::string res = std::format("{} = (0xFFFF{} * ({} >> (sizeof({}) * 8 - 1))) - (((sizeof({}) * 8) << 1) - 1) | {};", Code::dn(dn), s == Size::Byte ? "" : "FFFF", Code::dn(dn), Code::get_sizeof_size(s), Code::get_sizeof_size(s), Code::dn(dn));
+    std::string res = std::format("{0} = (0xFFFF{1} * ({0} >> ({2} - 1))) - ({2} << 1) - 1) | {0};", Code::dn(dn), s == Size::Byte ? "" : "FFFF", Code::get_u8_sizeof_size(s));
     std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", Code::dn(dn));
     flow_.ctx().writeln(res + flags + "// ext");
 }
@@ -206,7 +206,7 @@ void Recompiler::ext(Size s, u8 dn) { ///
 void Recompiler::nbcd(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }  
   
 void Recompiler::swap(u8 dn) { ///
-    std::string res = std::format("{} = (({} & 0xFFFF) << 16) | (({} >> 16) & 0xFFFF);", Code::dn(dn), Code::dn(dn), Code::dn(dn));
+    std::string res = std::format("{0} = (({0} & 0xFFFF) << 16) | (({0} >> 16) & 0xFFFF);", Code::dn(dn));
     std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", Code::dn(dn));
     flow_.ctx().writeln(res + flags + "// swap");
 }
@@ -221,8 +221,7 @@ void Recompiler::tst(Size s, AddressingMode m, u8 xn) {
     auto [pre, res, post] = get_value(s, m, xn);
 
     res = std::format("RES({});", res);
-    post +=
-        " CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;";
+    post += " CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;";
 
     flow_.ctx().writeln(pre + res + post + " // tst");
 }
@@ -390,7 +389,7 @@ void Recompiler::dbcc(Condition c, u8 dn, u16 displacement) {
     i16 d = displacement;
     u32 dst_adr = src_.get_pc() + d - 2;
 
-    call_function(dst_adr, std::format("{}--; if ({} != -1) ", Code::dn(dn), Code::dn(dn)), " // dbcc");
+    call_function(dst_adr, std::format("{0}--; if ({0} != -1) ", Code::dn(dn)), " // dbcc");
 }
 
 void Recompiler::bra(u8 displacement) {
@@ -434,16 +433,16 @@ void Recompiler::moveq(u8 dn, u8 data) {
 
 void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) { ///
     auto [pre, res, post] = upd_value(Size::Word, m, xn, "");
-    std::string pre_ = std::format("{}\nif(({} != 0) && ({} / {} <= 0xFF))", pre, Code::dn(dn), res, Code::dn(dn));
-    std::string res_ = std::format("{} = (({} / {}) & 0xFF) | ((({} % {}) & 0xFF) << 8)", res, res,Code::dn(dn),res,Code::dn(dn));
+    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF))", pre, Code::dn(dn), res);
+    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8)", res, Code::dn(dn));
     std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", res);
     flow_.ctx().writeln(pre_ + res_ + flags + post);
 }
 
 void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) { ///
     auto [pre, res, post] = upd_value(Size::Word, m, xn, "");
-    std::string pre_ = std::format("{}\nif(({} != 0) && ({} / {} <= 0xFF))", pre, Code::dn(dn), res, Code::dn(dn));
-    std::string res_ = std::format("{} = (({} / {}) & 0xFF) | ((({} % {}) & 0xFF) << 8)", res, res,Code::dn(dn),res,Code::dn(dn));
+    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF))", pre, Code::dn(dn), res);
+    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8)", res, Code::dn(dn));
     std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", res);
     flow_.ctx().writeln(pre_ + res_ + flags + post);
 }  
@@ -462,25 +461,42 @@ void Recompiler::or_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { ///
         std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dst_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // or to ea");
     } else {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" | {}", dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" | {}", ea_res));
         std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dst_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // or to dn");
     }
 }
 
-void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
-    if (d != DirectionO::Dn_x_ea_to_Dn) {
-        // TODO
-        NOT_IMPLEMENTED
-    }
+void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { ////-
+    // auto dn_dec = decode_ea(s, m, xn, dn);
+    // auto ea_dec = decode_ea(s, AddressingMode::DataRegister, dn);
 
-    // TODO flags
+    // auto [dn_pre, dn_res, dn_post] = fmt_get_value(dn_dec);
+    // auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
+    
+    // if (d == DirectionO::ea_x_Dn_to_ea) {
+    //     auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} - {}", ea_res, dn_res));
+        
+    //     dst_pre += std::format("RES({})",ea_res);
+    //     std::string flag_cv = std::format(
+    //         "ctx->cc.v=(({1}^{2})&({2}^ctx->res)&(1<<{3})); "
+    //         "ctx->cc.c=(({4}){}-({4}){}); "
+    //     , ea_res, dn_res, dst_res, Code::get_u8_sizeof_size(s)-1, Code::get_sizeof_size(s));
 
-    auto [spre, sres, spost] = get_value(s, m, xn, dn);
-    auto [dpre, dres, dpost] = upd_value(s, AddressingMode::DataRegister, dn, std::format(" - {}", sres));
+    //     std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", dst_res);
+    //     flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // sub to ea");
+    // } else {
+    //     auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} - {}", ea_res, dn_res));
+        
+    //     dst_pre += std::format("RES({})",dn_res);
+    //     std::string flag_cv = std::format(
+    //         "ctx->cc.v=(({0}^{2})&({2}^ctx->res)&(1<<{3})); "
+    //         "ctx->cc.c=(({4}){2}<({4}){1}); "
+    //     , ea_res, dn_res, dst_res, Code::get_u8_sizeof_size(s)-1, Code::get_sizeof_size(s));
 
-    flow_.ctx().writeln(spre + dpre + dres + dpost + spost + " // sub");
-
+    //     std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", dst_res);
+    //     flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // sub to ea");
+    // }
 }
 
 void Recompiler::subx_(u8 xn, Size s, Mode m, u8 xn2) { NOT_IMPLEMENTED }
@@ -499,7 +515,7 @@ void Recompiler::eor_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { //
         std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dst_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // eor to ea");
     } else {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" ^ {}", dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" ^ {}", ea_res));
         std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dst_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // eor to dn");
     }
@@ -537,18 +553,22 @@ void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { //
     }
 }
 
-void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
-    if (d != DirectionO::Dn_x_ea_to_Dn) {
-        // TODO
-        NOT_IMPLEMENTED
-    }
+void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) { ////
+    // auto dn_dec = decode_ea(s, m, xn, dn);
+    // auto ea_dec = decode_ea(s, AddressingMode::DataRegister, dn);
 
-    // TODO flags
+    // auto [dn_pre, dn_res, dn_post] = fmt_get_value(dn_dec);
+    // auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
 
-    auto [spre, sres, spost] = get_value(s, m, xn, dn);
-    auto [dpre, dres, dpost] = upd_value(s, AddressingMode::DataRegister, dn, std::format(" + {}", sres));
-
-    flow_.ctx().writeln(spre + dpre + dres + dpost + spost + " // add");
+    // if (d == DirectionO::ea_x_Dn_to_ea) {
+    //     auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, ea_res + std::format(" + {}", dn_res));
+    //     std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0; ctx->cc.x = ctx->cc.c;", dst_res);
+    //     flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // add to ea");
+    // } else {
+    //     auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" + {}", ea_res));
+    //     std::string flags =  std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0; ctx->cc.x = ctx->cc.c;", dst_res);
+    //     flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // add to dn");
+    // }
 }
 
 void Recompiler::addx_(u8 xn, Size s, Mode m, u8 xn2) { NOT_IMPLEMENTED }
@@ -567,11 +587,11 @@ void Recompiler::asd(RotationDirection d, AddressingMode m, u8 xn) {
     auto [pre, res, post] = upd_value(Size::Word, m, xn,"");
   
     std::string op = d == RotationDirection::Left ? "<<" : ">>";
-    std::string flag_c = std::format("RES({}); ctx->cc.c={}; ctx->cc.x=ctx->cc.c; {} {}= 1;", res, d == RotationDirection::Left ? std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(Size::Word)) : "ctx->res & 0b1", res, op);
+    std::string flag_c = std::format("RES({0}); ctx->cc.c={2}; ctx->cc.x=ctx->cc.c; {0} {1}= 1;", res, op, d == RotationDirection::Left ? std::format("(ctx->res >> ({} & 0b1))", Code::get_u8_sizeof_size(Size::Word) - 1) : "ctx->res & 0b1");
     if(d == RotationDirection::Left)
                 flag_c = flag_c + "CCN(); ";
     else
-                flag_c = "CCN(); " + flag_c + std::format(" if(ctx->cc.n) {} -= 1 << (sizeof({}) * 8 - 1); ", res, Code::get_sizeof_size(Size::Word));
+                flag_c = "CCN(); " + flag_c + std::format(" if(ctx->cc.n) {} -= 1 << {}; ", res, Code::get_u8_sizeof_size(Size::Word) - 1);
     std::string flags =  std::format("CCZ(); ctx->cc.v=0;");
   
     flow_.ctx().writeln(pre + res + flag_c + flags + post + " // asd ");
@@ -581,7 +601,7 @@ void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {///
     auto [pre, res, post] = upd_value(Size::Word, m, xn,"");
   
     std::string op = d == RotationDirection::Left ? "<<" : ">>";
-    std::string flag_c = std::format("RES({}); ctx->cc.c={}; ctx->cc.x=ctx->cc.c; {} {}= 1;", res, d == RotationDirection::Left ? std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(Size::Word)) : "ctx->res & 0b1", res, op);
+    std::string flag_c = std::format("RES({0}); ctx->cc.c={2}; ctx->cc.x=ctx->cc.c; {0} {1}= 1;", res, op, d == RotationDirection::Left ? std::format("(ctx->res >> ({} & 0b1))", Code::get_u8_sizeof_size(Size::Word) - 1) : "ctx->res & 0b1");
     std::string flags =  std::format("CCN(); CCZ(); ctx->cc.v=0;");
   
     flow_.ctx().writeln(pre + res + flag_c + flags + post + " // lsd ");
@@ -594,8 +614,8 @@ void Recompiler::rod(RotationDirection d, AddressingMode m, u8 xn) { ///
   
     std::string op = d == RotationDirection::Left ? "<<" : ">>";
     std::string op_ = d == RotationDirection::Left ? ">>" : "<<";
-                res = std::format("{} = ({} {} 1) | ({} {} (sizeof({}) * 8 - 1)); ", res, res, op, res, op_, Code::get_sizeof_size(Size::Word));
-    std::string flag_c = std::format("RES({}); ctx->cc.c={};", res, d == RotationDirection::Left ? "ctx->res & 0b1" : std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(Size::Word)));
+                res = std::format("{0} = ({0} {1} 1) | ({0} {2} {3}); ", res, op, op_, Code::get_u8_sizeof_size(Size::Word)-1);
+    std::string flag_c = std::format("RES({}); ctx->cc.c={};", res, d == RotationDirection::Left ? "ctx->res & 0b1" : std::format("(ctx->res >> ({} & 0b1))", Code::get_u8_sizeof_size(Size::Word) - 1));
     std::string flags =  std::format("CCN(); CCZ(); ctx->cc.v=0;");
   
     flow_.ctx().writeln(pre + res + flag_c + flags + post + " // rod ");
@@ -614,11 +634,11 @@ void Recompiler::asd_rotation(u8 rotation, RotationDirection d, Size s, Rotation
 
     std::string op = d == RotationDirection::Left ? "<<" : ">>";
     std::string res = std::format("{} {}= {}; ", Code::dn(dn), op, count_shift);
-    std::string flag_c = std::format("RES({}); ctx->cc.c={}; ctx->cc.x=ctx->cc.c; {} {}= 1;", Code::dn(dn), d == RotationDirection::Left ? std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(s)) : "ctx->res & 0b1", Code::dn(dn), op);
+    std::string flag_c = std::format("RES({0}); ctx->cc.c={2}; ctx->cc.x=ctx->cc.c; {0} {1}= 1;", Code::dn(dn), op, d == RotationDirection::Left ? std::format("(ctx->res >> ({} & 0b1))", Code::get_u8_sizeof_size(s)-1) : "ctx->res & 0b1");
     if(d == RotationDirection::Left)
                 flag_c = flag_c + "CCN(); ";
     else
-                flag_c = "CCN(); " + flag_c + std::format(" if(ctx->cc.n) {} -= 1 << (sizeof({}) * 8 - 1 - {}); ", Code::dn(dn), Code::get_sizeof_size(s), count_shift);
+                flag_c = "CCN(); " + flag_c + std::format(" if(ctx->cc.n) {} -= 1 << ({} - {}); ", Code::dn(dn), Code::get_u8_sizeof_size(s) -1, count_shift);
     std::string flags =  std::format("CCZ(); ctx->cc.v=0;");
 
     flow_.ctx().writeln(res + flag_c + flags + std::format(" // asd_rotation {}",rotation));
@@ -637,7 +657,7 @@ void Recompiler::lsd_rotation(u8 rotation, RotationDirection d, Size s, Rotation
 
     std::string op = d == RotationDirection::Left ? "<<" : ">>";
     std::string res = std::format("{} {}= {}; ", Code::dn(dn), op, count_shift);
-    std::string flag_c = std::format("RES({}); ctx->cc.c={}; ctx->cc.x=ctx->cc.c; {} {}= 1;", Code::dn(dn), d == RotationDirection::Left ? std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(s)) : "ctx->res & 0b1", Code::dn(dn), op);
+    std::string flag_c = std::format("RES({0}); ctx->cc.c={2}; ctx->cc.x=ctx->cc.c; {0} {1}= 1;", Code::dn(dn), op, d == RotationDirection::Left ? std::format("(ctx->res >> ({} & 0b1))", Code::get_u8_sizeof_size(s) - 1) : "ctx->res & 0b1");
     std::string flags =  std::format("CCN(); CCZ(); ctx->cc.v=0;");
 
     flow_.ctx().writeln(res + flag_c + flags + std::format(" // lsd_rotation {}",rotation));
@@ -655,13 +675,9 @@ void Recompiler::rox_rotation(u8 rotation, RotationDirection d, Size s, Rotation
     }
 
     if (d == RotationDirection::Left) {
-        flow_.ctx().writeln(
-            std::format("{} = ROXL({}, {});", Code::dn(dn), Code::dn(dn), rot_value)
-        );
+        flow_.ctx().writeln(std::format("{0} = ROXL({0}, {1});", Code::dn(dn), rot_value));
     } else {
-        flow_.ctx().writeln(
-            std::format("{} = ROXR({}, {});", Code::dn(dn), Code::dn(dn), rot_value)
-        );
+        flow_.ctx().writeln(std::format("{0} = ROXR({0}, {1});", Code::dn(dn), rot_value));
     }
 }
 
@@ -678,8 +694,8 @@ void Recompiler::rod_rotation(u8 rotation, RotationDirection d, Size s, Rotation
   
     std::string op = d == RotationDirection::Left ? "<<" : ">>";
     std::string op_ = d == RotationDirection::Left ? ">>" : "<<";
-    std::string res = std::format("{} = ({} {} {}) | ({} {} (sizeof({}) * 8 - {}));", Code::dn(dn), Code::dn(dn), op, count_shift, Code::dn(dn), op_, Code::get_sizeof_size(s), count_shift);
-    std::string flag_c = std::format("RES({}); ctx->cc.c={};", Code::dn(dn), d == RotationDirection::Left ? "ctx->res & 0b1" : std::format("(ctx->res >> ((sizeof({}) * 8 - 1)) & 0b1)", Code::get_sizeof_size(s)));
+    std::string res = std::format("{0} = ({0} {1} {2}) | ({0} {3} ({4} - {2}));", Code::dn(dn), op, count_shift, op_, Code::get_u8_sizeof_size(s));
+    std::string flag_c = std::format("RES({}); ctx->cc.c={};", Code::dn(dn), d == RotationDirection::Left ? "ctx->res & 0b1" : std::format("(ctx->res >> {} & 0b1)", Code::get_u8_sizeof_size(s) - 1));
     std::string flags =  std::format("CCN(); CCZ(); ctx->cc.v=0;");
   
     flow_.ctx().writeln(res + flag_c + flags + std::format(" // rod_rotation {}",rotation));
