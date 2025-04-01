@@ -146,7 +146,7 @@ private:
 
     std::string make_condition(Condition c);
 
-    void call_function(u32 dst_adr, std::string pre = "", std::string post = "");
+    void call_function(u32 dst_adr, std::string pre = "", std::string post = "", bool exit_on_return = false);
 
     void call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::string pre = "", std::string post = "");
 

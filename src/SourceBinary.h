@@ -23,7 +23,8 @@ public:
     u32 get_next_by_size(Size s) {
         switch (s) {
         case Size::Byte:
-            return get_next_byte();
+            return get_next_word() & 0xFF;
+            // return get_next_byte();
         case Size::Word:
             return get_next_word();
         case Size::Long:

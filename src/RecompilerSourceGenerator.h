@@ -14,10 +14,10 @@ public:
         out << "#include \"context.h\"\n\n";
 
         for (const auto &pair : flow_.program()) {
-            out << "void " << pair.second.name << "(Context* ctx);\n";
+            out << "void " << pair.second.name << "(Context* ctx);" << " // jumped " << pair.second.jumped_count << "\n";
         }
 
-        out << "\n/* -------------------------------------- */\n";
+        out << "\n/* -------------------------------------- */";
         out << "\n/* -------------------------------------- */\n\n";
 
         for (const auto &pair : flow_.program()) {

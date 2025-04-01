@@ -46,39 +46,30 @@ public:
         program_[adr] = {
             .adr = adr,
             .last_pc = src_.get_pc(),
+            .jumped_count = 0,
             .name = get_name_for_label(adr),
         };
     }
 
     void ret() {
         stack_.pop();
+        if (stack_.empty()) {
+            throw std::invalid_argument("stack empty");
+        }
         routine_ = stack_.top()->adr;
+        if (program_[routine_].is_translation_finished) {
+            ret();
+            return;
+        }
         src_.set_pc(program_[routine_].last_pc);
     }
 
-    void jmp(u32 adr) {
+    void jmp(u32 adr, bool exit_on_return = false) {
+        program_.at(adr).jumped_count++;
         ctx().last_pc = src_.get_pc();
-        stack_.push(&program_[adr]);
+        stack_.push(&program_.at(adr));
         routine_ = adr;
         src_.set_pc(adr);
-    }
-
-    void jmp_xn(u32 pc, u32 base_adr) {
-        auto& xn_list = get_xn_list_for_adr(pc);
-
-        u32 dst_adr = base_adr + xn_list[xn_jmp_index_];
-
-        if (xn_jmp_index_ != xn_list.size()-1) {
-            ctx().last_pc = pc;
-            xn_jmp_index_++;
-        } else {
-            ctx().last_pc = src_.get_pc();
-            xn_jmp_index_ = 0;
-        }
-
-        stack_.push(&program_[dst_adr]);
-        routine_ = dst_adr;
-        src_.set_pc(dst_adr);    
     }
 
     const std::vector<i32>& get_xn_list_for_adr(u32 adr) {
