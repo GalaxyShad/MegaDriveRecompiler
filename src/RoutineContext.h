@@ -10,6 +10,8 @@ struct RoutineContext {
     std::string name;
 
     u32 last_pc;
+    bool is_translation_finished;
+    int jumped_count;
 
     std::vector<std::string> line_list;
 

@@ -119,9 +119,9 @@ void Recompiler::movea(Size s, u8 an, AddressingMode m, u8 xn) {
 
     auto [pre, src, post] = fmt_get_value(ea);
     
-    auto res = std::format("{} = {};", Code::an(an), src);
+    auto res = std::format("{} = {}{};", Code::an(an), (ea.mode == AddressingMode::DataRegister) ? "ctx->mem + " : "", src);
 
-    flow_.ctx().writeln(pre + res + post);
+    flow_.ctx().writeln(pre + res + post + " // movea");
 }
 
 void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode dst_m, u8 dst_xn) {
@@ -309,12 +309,12 @@ void Recompiler::jmp(AddressingMode m, u8 xn) {
         }
 
         case AddressingMode::AbsWord: {
-            call_function(ea.abs_word_adr, "", " return;");
+            call_function(ea.abs_word_adr, "", " return;", true);
             break;
         }
 
         case AddressingMode::AbsLong: {
-            call_function(ea.abs_long_adr, "", " return;");
+            call_function(ea.abs_long_adr, "", " return;", true);
             break;
         }
 
@@ -447,7 +447,9 @@ void Recompiler::bra(u8 displacement) {
 
     u32 dst_adr = src_.get_pc() + displ;
 
-    call_function(dst_adr, "", " return; // bra");
+    flow_.ctx().is_translation_finished = true;
+
+    call_function(dst_adr, "", " return; // bra", true);
 }
 
 void Recompiler::bsr(u8 displacement) {
@@ -607,7 +609,13 @@ void Recompiler::adda_(u8 an, Size s, AddressingMode m, u8 xn) {
 
     auto [pre, src, post] = fmt_get_value(ea);
 
-    auto res = std::format("{} += {};", Code::an(an), src);
+    std::string res;
+
+    if (ea.mode != AddressingMode::Immediate) {
+        res = std::format("{} = {} + ({} - {});", Code::an(an), Code::an(an), src, Code::an(an));
+    } else {
+        res = std::format("{} += {};", Code::an(an), src);
+    }
 
     flow_.ctx().writeln(pre + res + post + " // adda");
 }
@@ -737,7 +745,7 @@ void Recompiler::rod_rotation(u8 rotation, RotationDirection d, Size s, Rotation
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
 
-void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post) {
+void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post, bool exit_on_return) {
     auto fn_name = flow_.get_name_for_label(dst_adr);
 
     flow_.ctx().writeln(pre + Code::call_function(fn_name) + post);
@@ -746,7 +754,7 @@ void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post) {
         flow_.ret();
     } else if (!flow_.program().contains(dst_adr)) {
         flow_.add_routine(dst_adr);
-        flow_.jmp(dst_adr);
+        flow_.jmp(dst_adr, exit_on_return);
     }
 }
 
@@ -759,25 +767,21 @@ void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::stri
 
         auto fn_name = flow_.get_name_for_label(adr);
 
-        if (!flow_.program().contains(adr)) {
-            flow_.add_routine(adr);
-        }
-
         flow_.ctx().writeln(std::format("case {}: {} break;", Code::imm(i), pre + Code::call_function(fn_name) + post));
     }
     flow_.ctx().writeln("}");
 
-    for (auto& i : xn_list) {
-        u32 adr = dst_adr + i;
+    // for (auto& i : xn_list) {
+    //     u32 adr = dst_adr + i;
 
-        if (flow_.ctx().adr == adr) {
-            flow_.ret();
-        } else if (flow_.program().contains(adr)) {
-            // flow_.add_routine(adr);
-            flow_.jmp(adr);
-            break; // FIXME
-        }
-    }
+    //     if (flow_.ctx().adr == adr) {
+    //         flow_.ret();
+    //     } else if (!flow_.program().contains(adr)) {
+    //         flow_.add_routine(adr);
+    //         flow_.jmp(adr);
+    //         break; // FIXME
+    //     }
+    // }
 }
 
 std::tuple<std::string, std::string, std::string>
@@ -886,7 +890,7 @@ DecodedEffectiveAddress Recompiler::decode_ea(Size s, AddressingMode m, u8 xn, u
         }
         case AddressingMode::PcWithIndex: {
             res.pc_with_index = src_.get_pc();
-            res.pc_with_index += src_.get_next_word();
+            res.pc_with_index += src_.get_next_word() & 0xFF;
             break;
         }
     }

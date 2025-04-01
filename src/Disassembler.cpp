@@ -3,7 +3,7 @@
 #include "ident.h"
 
 void Disassembler::disassemble() {
-    if (src_.get_pc() == 0x2E16) {
+    if (src_.get_pc() == 0x18B2) {
 
     }
 
@@ -337,11 +337,11 @@ void Disassembler::disassemble() {
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
         n_->scc(ident::ident_condition(condition), ident::ident_effective_adr(m, xn), xn);
-    } else if ((op & 0b1111111100000000) == 0b0110000000000000) {
+    } else if ((op & 0b1111'1111'00000000) == 0b0110'0000'00000000) {
         // BRA
         u8 displacement = (op >> 0) & 0b11111111;
-        n_->bsr(displacement);
-    } else if ((op & 0b1111111100000000) == 0b0110000100000000) {
+        n_->bra(displacement);
+    } else if ((op & 0b1111'1111'00000000) == 0b0110'0001'00000000) {
         // BSR
         u8 displacement = (op >> 0) & 0b11111111;
         n_->bsr(displacement);
