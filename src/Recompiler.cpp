@@ -333,8 +333,7 @@ void Recompiler::jmp(AddressingMode m, u8 xn) {
     }
 }
 
-void Recompiler::movem(DirectionR d, Size s, AddressingMode m, u8 xn, u16 reg_mask) { ///
-    // NOT_IMPLEMENTED
+void Recompiler::movem(DirectionR d, Size s, AddressingMode m, u8 xn, u16 reg_mask) { 
     auto [pre, src, post] = get_value(s, m, xn);
     std::string val, dst;
 
@@ -815,17 +814,17 @@ void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::stri
     }
     flow_.ctx().writeln("}");
 
-    // for (auto& i : xn_list) {
-    //     u32 adr = dst_adr + i;
+    for (auto& i : xn_list) {
+        u32 adr = dst_adr + i;
 
-    //     if (flow_.ctx().adr == adr) {
-    //         flow_.ret();
-    //     } else if (!flow_.program().contains(adr)) {
-    //         flow_.add_routine(adr);
-    //         flow_.jmp(adr);
-    //         break; // FIXME
-    //     }
-    // }
+        if (flow_.ctx().adr == adr) {
+            flow_.ret();
+        } else if (!flow_.program().contains(adr)) {
+            flow_.add_routine(adr);
+            flow_.jmp(adr);
+            break; // FIXME
+        }
+    }
 }
 
 std::tuple<std::string, std::string, std::string>
