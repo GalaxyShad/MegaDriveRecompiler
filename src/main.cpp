@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "Config.h"
 #include "Disassembler.h"
 #include "Recompiler.h"
 #include "RecompilerFlow.h"
@@ -9,23 +10,19 @@
 #include "SourceBinary.h"
 #include "tinyint.h"
 
-const u32 game_init_adr = 0x364;
+RecompilerConfig load_config();
 
 auto main() -> int {
 
-    SourceBinary binary("./build/s1built.bin");
+    auto cfg = load_config();
 
-    std::unordered_map<u32, std::vector<i32>> known_xn_values = {
-        {0x390, {0x00, 0x04, 0x08, 0x0C, 0x10, 0x14, 0x18, 0x1C}},
-        {0x14C2, {0x14FA, 0x1504}},
-        {0x175C, {0, 2, 4, 6, 8, 0xA, 0xC, 0xE}}
-    };
+    SourceBinary binary(cfg.binary_name);
 
-    binary.set_pc(game_init_adr);
+    binary.set_pc(cfg.start_adr);
 
-    RecompilerFlow flow(binary);
+    RecompilerFlow flow(binary, cfg.known_labels);
 
-    flow.add_known_xn_values(known_xn_values);
+    flow.add_known_xn_values(cfg.known_xn_values);
 
     Recompiler recomp(binary, flow);
     Disassembler disasm(binary, &recomp);

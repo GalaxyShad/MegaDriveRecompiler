@@ -18,6 +18,11 @@ public:
         add_routine_and_jmp(source.get_pc());
     }
 
+    RecompilerFlow(SourceBinary &source, std::unordered_map<u32, std::string> &known_labels)
+        : src_(source), known_labels_(&known_labels), routine_(source.get_pc()) {
+        add_routine_and_jmp(source.get_pc());
+    }
+
     RoutineContext &ctx() { return program_[routine_]; }
 
     const std::map<u32, RoutineContext> &program() { return program_; }

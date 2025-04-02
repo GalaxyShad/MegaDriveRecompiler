@@ -4,4 +4,4 @@ unused/
 .vscode/
 **/*.DS_Store
 recompiled/recompiled.c
-config.h
+src/RecompilerConfig.cpp
