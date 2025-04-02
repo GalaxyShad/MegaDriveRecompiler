@@ -64,6 +64,17 @@ public:
         }
     }
 
+    static u8 get_u8_sizeof_size(Size size) {
+        switch (size) {
+        case Size::Byte:
+            return 8;
+        case Size::Word:
+            return 16;
+        case Size::Long:
+            return 32;
+        }
+    }
+
 private:
     static std::string get_macro_size(Size size) {
         switch (size) {
