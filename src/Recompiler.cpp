@@ -136,15 +136,10 @@ void Recompiler::cmpi(Size s, AddressingMode m, u8 xn, u32 data) {
 }
 
 void Recompiler::btst(AddressingMode m, u8 xn, u8 bitindex) {
-
     Size s = (m == AddressingMode::DataRegister) ? Size::Long : Size::Byte;
-
-    if (s == Size::Byte) bitindex %= 8;
-
+    bitindex %= Code::get_u8_sizeof_size(s);
     auto [pre, res, post] = get_value(s, m, xn);
-
     res = std::format("ctx->cc.z = (({} & {}) == 0);", res, Code::imm(1 << bitindex));
-
     flow_.ctx().writeln(pre + res + post + " // btst");
 }
 
@@ -178,20 +173,37 @@ void Recompiler::bset(AddressingMode m, u8 xn, u8 bitindex) {
     flow_.ctx().writeln(pre + flags + dst + post + " // bset");
 }
 
-void Recompiler::btst_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) {
+void Recompiler::btst_dn(u8 dn, AddressingMode m, u8 xn) {
+    auto dn_dec = decode_ea(Size::Long, AddressingMode::DataRegister, dn);
+    auto [_pre, src, _post] = fmt_get_value(dn_dec);
+
+    Size s = (m == AddressingMode::DataRegister) ? Size::Long : Size::Byte;
+    auto [pre, res, post] = get_value(s, m, xn);
+    res = std::format("ctx->cc.z = (({} & (1 << ({}%{}))) == 0);", res, src, Code::get_u8_sizeof_size(s));
+    flow_.ctx().writeln(pre + res + post + " // btst_dn");
+}
+
+void Recompiler::bchg_dn(u8 dn, AddressingMode m, u8 xn) {
     NOT_IMPLEMENTED
 }
 
-void Recompiler::bchg_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) {
+void Recompiler::bclr_dn(u8 dn, AddressingMode m, u8 xn) {
     NOT_IMPLEMENTED
 }
 
-void Recompiler::bclr_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) {
-    NOT_IMPLEMENTED
-}
+void Recompiler::bset_dn(u8 dn, AddressingMode m, u8 xn) {
+    auto dn_dec = decode_ea(Size::Long, AddressingMode::DataRegister, dn);
+    auto [_pre, dn_src, _post] = fmt_get_value(dn_dec);
 
-void Recompiler::bset_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) {
-    NOT_IMPLEMENTED
+    auto ea = decode_ea(m == AddressingMode::DataRegister ? Size::Long : Size::Byte, m, xn);
+    auto [pre, src, post] = fmt_get_value(ea);
+
+    auto flags = std::format(" ctx->cc.z = (({} >> {}) & 1) == 0; ", src, dn_src);
+
+    auto res = std::format("{} | (1 << {})", src, dn_src);
+    auto [dstpre, dst, dstpost] = fmt_set_value(ea, res);
+
+    flow_.ctx().writeln(pre + flags + dst + post + " // bset");
 }
 
 void Recompiler::movep(u8 dn, DirectionR d, Size s, u8 an, u16 displacement) {
@@ -441,7 +453,7 @@ void Recompiler::jmp(AddressingMode m, u8 xn) {
             break;
         }
         case AddressingMode::PcWithIndex: {
-            call_xn_function(src_.get_pc() - 4, ea.pc_with_index, Code::dn(ea.dst_xn), "", " return;");
+            call_xn_function(src_.get_pc() - 4, ea.pc_with_index, Code::dn(ea.dst_xn), "", " return;", true);
             break;
         }
 
@@ -609,17 +621,19 @@ void Recompiler::moveq(u8 dn, u8 data) {
 }
 
 void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) {///
-    auto [pre, res, post] = upd_value(Size::Word, m, xn, "");
-    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF))", pre, Code::dn(dn), res);
-    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8)", res, Code::dn(dn));
+    auto [pre, res, post] = get_value(Size::Word, m, xn);
+
+    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF))", pre, res, Code::dn(dn));
+    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8)", Code::dn(dn), res);
     std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", res);
     flow_.ctx().writeln(pre_ + res_ + flags + post);
 }
 
 void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) {///
-    auto [pre, res, post] = upd_value(Size::Word, m, xn, "");
-    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF))", pre, Code::dn(dn), res);
-    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8)", res, Code::dn(dn));
+    auto [pre, res, post] = get_value(Size::Word, m, xn);
+
+    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF))", pre, res, Code::dn(dn));
+    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8)", Code::dn(dn), res);
     std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", res);
     flow_.ctx().writeln(pre_ + res_ + flags + post);
 }
@@ -957,7 +971,7 @@ void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post, b
     }
 }
 
-void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::string pre, std::string post) {
+void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::string pre, std::string post, bool exit_on_return) {
     auto &xn_list = flow_.get_xn_list_for_adr(pc);
 
     flow_.ctx().writeln(std::format("switch ({}) {{", xn));
@@ -973,12 +987,12 @@ void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::stri
     for (auto &i: xn_list) {
         u32 adr = dst_adr + i;
 
-        if (flow_.ctx().adr == adr) {
+        
+        if (flow_.ctx().adr == dst_adr || (flow_.program().contains(dst_adr) && exit_on_return)) {
             flow_.ret();
-        } else if (!flow_.program().contains(adr)) {
-            flow_.add_routine(adr);
-            flow_.jmp(adr);
-            break;// FIXME
+        } else if (!flow_.program().contains(dst_adr)) {
+            flow_.add_routine(dst_adr);
+            flow_.jmp(dst_adr, exit_on_return);
         }
     }
 }
