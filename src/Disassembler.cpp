@@ -82,53 +82,53 @@ void Disassembler::disassemble() {
         // BTST
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
-        u16 im = src_.get_next_word();
+        u16 im = src_.get_next_word() & 0xFF;
         n_->btst(ident::ident_effective_adr(m, xn), xn, im);
     } else if ((op & 0b1111111111000000) == 0b0000100001000000) {
         // BCHG
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
-        u8 im = src_.get_next_byte();
+        u8 im = src_.get_next_word() & 0xFF;
         n_->bchg(ident::ident_effective_adr(m, xn), xn, im);
     } else if ((op & 0b1111111111000000) == 0b0000100010000000) {
         // BCLR
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
-        u8 im = src_.get_next_byte();
+        u8 im = src_.get_next_word() & 0xFF;
         n_->bclr(ident::ident_effective_adr(m, xn), xn, im);
     } else if ((op & 0b1111111111000000) == 0b0000100011000000) {
         // BSET
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
-        u8 im = src_.get_next_byte();
+        u8 im = src_.get_next_word() & 0xFF;
         n_->bset(ident::ident_effective_adr(m, xn), xn, im);
     } else if ((op & 0b1111000111000000) == 0b0000000100000000) {
         // BTST
         u8 dn = (op >> 9) & 0b111;
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
-        u8 im = src_.get_next_byte();
+        u8 im = src_.get_next_word() & 0xFF;
         n_->btst_dn(dn, ident::ident_effective_adr(m, xn), xn, im);
     } else if ((op & 0b1111000111000000) == 0b0000000101000000) {
         // BCHG
         u8 dn = (op >> 9) & 0b111;
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
-        u8 im = src_.get_next_byte();
+        u8 im = src_.get_next_word() & 0xFF;
         n_->bchg_dn(dn, ident::ident_effective_adr(m, xn), xn, im);
     } else if ((op & 0b1111000111000000) == 0b0000000110000000) {
         // BCLR
         u8 dn = (op >> 9) & 0b111;
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
-        u8 im = src_.get_next_byte();
+        u8 im = src_.get_next_word() & 0xFF;
         n_->bclr_dn(dn, ident::ident_effective_adr(m, xn), xn, im);
     } else if ((op & 0b1111000111000000) == 0b0000000111000000) {
         // BSET
         u8 dn = (op >> 9) & 0b111;
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
-        u8 im = src_.get_next_byte();
+        u8 im = src_.get_next_word() & 0xFF;
         n_->bset_dn(dn, ident::ident_effective_adr(m, xn), xn, im);
     } else if ((op & 0b1111000100111000) == 0b0000000100001000) {
         // MOVEP

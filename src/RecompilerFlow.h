@@ -72,6 +72,7 @@ public:
     void jmp(u32 adr, bool exit_on_return = false) {
         program_.at(adr).jumped_count++;
         ctx().last_pc = src_.get_pc();
+        ctx().is_translation_finished = exit_on_return;
         stack_.push(&program_.at(adr));
         routine_ = adr;
         src_.set_pc(adr);
