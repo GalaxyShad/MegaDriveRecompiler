@@ -643,26 +643,26 @@ void Recompiler::sbcd(u8 xn, Mode m, u8 xn2) {
 }
 
 void Recompiler::or_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
-    auto dn_dec = decode_ea(s, m, xn, dn);
-    auto ea_dec = decode_ea(s, AddressingMode::DataRegister, dn);
+    auto ea_dec = decode_ea(s, m, xn, dn);
+    auto dn_dec = decode_ea(s, AddressingMode::DataRegister, dn);
 
     auto [dn_pre, dn_res, dn_post] = fmt_get_value(dn_dec);
     auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
 
     if (d == DirectionO::ea_x_Dn_to_ea) {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, ea_res + std::format(" | {}", dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} | {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // or to ea");
     } else {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" | {}", ea_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} | {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // or to dn");
     }
 }
 
 void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
-    auto dn_dec = decode_ea(s, m, xn, dn);
-    auto ea_dec = decode_ea(s, AddressingMode::DataRegister, dn);
+    auto ea_dec = decode_ea(s, m, xn, dn);
+    auto dn_dec = decode_ea(s, AddressingMode::DataRegister, dn);
 
     auto [dn_pre, dn_res, dn_post] = fmt_get_value(dn_dec);
     auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
@@ -703,18 +703,18 @@ void Recompiler::suba_(u8 an, Size s, AddressingMode m, u8 xn) {
 }
 
 void Recompiler::eor_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
-    auto dn_dec = decode_ea(s, m, xn, dn);
-    auto ea_dec = decode_ea(s, AddressingMode::DataRegister, dn);
+    auto ea_dec = decode_ea(s, m, xn, dn);
+    auto dn_dec = decode_ea(s, AddressingMode::DataRegister, dn);
 
     auto [dn_pre, dn_res, dn_post] = fmt_get_value(dn_dec);
     auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
 
     if (d == DirectionO::ea_x_Dn_to_ea) {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, ea_res + std::format(" ^ {}", dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} ^ {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // eor to ea");
     } else {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" ^ {}", ea_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} ^ {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // eor to dn");
     }
@@ -764,26 +764,26 @@ void Recompiler::exg(u8 rx, u8 opmode, u8 ry) {
 }
 
 void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
-    auto dn_dec = decode_ea(s, m, xn, dn);
-    auto ea_dec = decode_ea(s, AddressingMode::DataRegister, dn);
+    auto ea_dec = decode_ea(s, m, xn, dn);
+    auto dn_dec = decode_ea(s, AddressingMode::DataRegister, dn);
 
     auto [dn_pre, dn_res, dn_post] = fmt_get_value(dn_dec);
     auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
 
     if (d == DirectionO::ea_x_Dn_to_ea) {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, ea_res + std::format(" & {}", dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} & {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // and to ea");
     } else {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, dn_res + std::format(" & {}", ea_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} & {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // and to dn");
     }
 }
 
 void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
-    auto dn_dec = decode_ea(s, m, xn, dn);
-    auto ea_dec = decode_ea(s, AddressingMode::DataRegister, dn);
+    auto ea_dec = decode_ea(s, m, xn, dn);
+    auto dn_dec = decode_ea(s, AddressingMode::DataRegister, dn);
 
     auto [dn_pre, dn_res, dn_post] = fmt_get_value(dn_dec);
     auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
