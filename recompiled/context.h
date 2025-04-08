@@ -11,9 +11,9 @@ typedef signed int    i32;
 #define MOVE_TO_ADR_U16(A, B)
 #define MOVE_TO_ADR_U32(A, B)
 
-#define DEREF_ADR_U8(X) 0
-#define DEREF_ADR_U16(X) 0
-#define DEREF_ADR_U32(X) 0
+#define DEREF_ADR_U8(ADR)  ((ADR)[0])
+#define DEREF_ADR_U16(ADR) (((ADR)[0] << 8) | (ADR)[1])
+#define DEREF_ADR_U32(ADR) (((ADR)[0] << 24) | ((ADR)[1] << 16) | ((ADR)[2] << 8) | (ADR)[3])
 
 #define RES(X) ctx->res=X
 #define CCN() ctx->cc.n=(ctx->res<0)
