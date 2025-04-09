@@ -49,10 +49,10 @@ public:
     void bchg(AddressingMode m, u8 xn, u8 bitindex) override;
     void bclr(AddressingMode m, u8 xn, u8 bitindex) override;
     void bset(AddressingMode m, u8 xn, u8 bitindex) override;
-    void btst_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) override;
-    void bchg_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) override;
-    void bclr_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) override;
-    void bset_dn(u8 dn, AddressingMode m, u8 xn, u8 bitindex) override;
+    void btst_dn(u8 dn, AddressingMode m, u8 xn) override;
+    void bchg_dn(u8 dn, AddressingMode m, u8 xn) override;
+    void bclr_dn(u8 dn, AddressingMode m, u8 xn) override;
+    void bset_dn(u8 dn, AddressingMode m, u8 xn) override;
     void movep(u8 dn, DirectionR d, Size s, u8 an, u16 displacement) override;
     void movea(Size s, u8 an, AddressingMode m, u8 xn) override;
     void move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode dst_m, u8 dst_xn) override;
@@ -148,7 +148,7 @@ private:
 
     void call_function(u32 dst_adr, std::string pre = "", std::string post = "", bool exit_on_return = false);
 
-    void call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::string pre = "", std::string post = "");
+    void call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::string pre = "", std::string post = "", bool exit_on_return = false, std::string comment="");
 
     SourceBinary &src_;
     RecompilerFlow& flow_;
