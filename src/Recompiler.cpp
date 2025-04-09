@@ -18,13 +18,14 @@ static void not_impl_(const std::string &fname, RecompilerFlow &flow) {
 
 #define NOT_IMPLEMENTED not_impl_(__func__, flow_);
 
-std::string op_to_ccr(char op = ' '){
+std::string op_to_ccr(char op = ' ') {
     return std::format(
         "ctx->cc.c {0}= (ctx->res >> 0) & 1; "
         "ctx->cc.v {0}= (ctx->res >> 1) & 1; "
         "ctx->cc.z {0}= (ctx->res >> 2) & 1; "
         "ctx->cc.n {0}= (ctx->res >> 3) & 1; "
-        "ctx->cc.x {0}= (ctx->res >> 4) & 1;", op
+        "ctx->cc.x {0}= (ctx->res >> 4) & 1;",
+        op
     );
 }
 
@@ -40,7 +41,7 @@ void Recompiler::ori_to_sr(u16 data) {
     flow_.ctx().writeln(res + flags + " // ori to sr");
 }
 
-void Recompiler::ori(Size s, AddressingMode m, u8 xn, u32 data) { ///
+void Recompiler::ori(Size s, AddressingMode m, u8 xn, u32 data) {///
     auto dec = decode_ea(s, m, xn);
     auto [_spre, src, _spost] = fmt_get_value(dec);
     auto [pre, res, post] = fmt_set_value(dec, src + std::format(" | {}", Code::imm(data)));
@@ -70,35 +71,35 @@ void Recompiler::andi(Size s, AddressingMode m, u8 xn, u32 data) {
     flow_.ctx().writeln(pre + res + flags + post + " // andi");
 }
 
-void Recompiler::subi(Size s, AddressingMode m, u8 xn, u32 data) { ///
+void Recompiler::subi(Size s, AddressingMode m, u8 xn, u32 data) {///
     auto dec = decode_ea(s, m, xn);
     auto imm = Code::imm(data);
     auto [_spre, src, _spost] = fmt_get_value(dec);
     auto [pre, dst, post] = fmt_set_value(dec, src + std::format(" - {}", imm));
 
-    pre += std::format("RES({}); ",src);
+    pre += std::format("RES({}); ", src);
     std::string flag_cv = std::format(" "
-        "ctx->cc.v=(({0}^{1})&({0}^ctx->res))>>{2}; "
-        "ctx->cc.c=({3})ctx->res<({3}){0}; ",
-    src, imm, Code::get_u8_sizeof_size(s)-1, Code::get_sizeof_size(s));
+                                      "ctx->cc.v=(({0}^{1})&({0}^ctx->res))>>{2}; "
+                                      "ctx->cc.c=({3})ctx->res<({3}){0}; ",
+                                      src, imm, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s));
     std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", src);
-    
+
     flow_.ctx().writeln(pre + dst + flag_cv + flags + post + " // subi");
 }
 
-void Recompiler::addi(Size s, AddressingMode m, u8 xn, u32 data) { ///
+void Recompiler::addi(Size s, AddressingMode m, u8 xn, u32 data) {///
     auto dec = decode_ea(s, m, xn);
     auto imm = Code::imm(data);
     auto [_spre, src, _spost] = fmt_get_value(dec);
     auto [pre, dst, post] = fmt_set_value(dec, src + std::format(" + {}", imm));
 
-    pre += std::format("RES({}); ",src);
+    pre += std::format("RES({}); ", src);
     std::string flag_cv = std::format(" "
-        "ctx->cc.v=(({0}^{1})&({0}^ctx->res))>>{2}; "
-        "ctx->cc.c=({3})ctx->res>({3}){0}; ",
-        src, imm, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s));
+                                      "ctx->cc.v=(({0}^{1})&({0}^ctx->res))>>{2}; "
+                                      "ctx->cc.c=({3})ctx->res>({3}){0}; ",
+                                      src, imm, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s));
     std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", src);
-    
+
     flow_.ctx().writeln(pre + dst + flag_cv + flags + post + " // addi");
 }
 
@@ -114,7 +115,7 @@ void Recompiler::eori_to_sr(u16 data) {
     flow_.ctx().writeln(res + flags + " // eori to sr");
 }
 
-void Recompiler::eori(Size s, AddressingMode m, u8 xn, u32 data) { ///
+void Recompiler::eori(Size s, AddressingMode m, u8 xn, u32 data) {///
     auto dec = decode_ea(s, m, xn);
     auto [_spre, src, _spost] = fmt_get_value(dec);
     auto [pre, res, post] = fmt_set_value(dec, src + std::format(" ^ {}", Code::imm(data)));
@@ -215,7 +216,11 @@ void Recompiler::movea(Size s, u8 an, AddressingMode m, u8 xn) {
 
     auto [pre, src, post] = fmt_get_value(ea);
 
-    auto res = std::format("{} = {}{};", Code::an(an), (ea.mode == AddressingMode::DataRegister) ? "ctx->mem + " : "", src);
+    bool isNeedCtxMem =
+        ea.mode != AddressingMode::AddressRegister;
+
+
+    auto res = std::format("{} = {}{};", Code::an(an), isNeedCtxMem ? "ctx->mem + " : "", src);
 
     flow_.ctx().writeln(pre + res + post + " // movea");
 }
@@ -225,7 +230,18 @@ void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode ds
     auto dst_ea = decode_ea(s, dst_m, dst_xn);
 
     auto [src_pre, src, src_post] = fmt_get_value(src_ea);
+
+    if (src_ea.mode == AddressingMode::AddressRegister 
+        && dst_ea.mode != AddressingMode::AddressRegister
+    ) {
+        src += "-ctx->mem";
+    } 
+
     auto [dst_pre, dst, dst_post] = fmt_set_value(dst_ea, src);
+
+    
+
+    // TODO flags
 
     flow_.ctx().writeln(src_pre + dst_pre + dst + src_post + dst_post + " // move");
 }
@@ -235,10 +251,10 @@ void Recompiler::move_from_sr(AddressingMode m, u8 xn) {
 
     auto r =
         "ctx->res = (ctx->cc.c << 0) "
-                " | (ctx->cc.v << 1) "
-                " | (ctx->cc.z << 2) "
-                " | (ctx->cc.n << 3) "
-                " | (ctx->cc.x << 4); ";
+        " | (ctx->cc.v << 1) "
+        " | (ctx->cc.z << 2) "
+        " | (ctx->cc.n << 3) "
+        " | (ctx->cc.x << 4); ";
 
     auto [pre, res, post] = fmt_set_value(ea, "ctx->res");
 
@@ -290,10 +306,10 @@ void Recompiler::not_(Size s, AddressingMode m, u8 xn) {
     auto [pre, src, post] = fmt_get_value(ea);
 
     auto flags = ""
-        "ctx->cc.n = (ctx->res < 0); "
-        "ctx->cc.z = (ctx->res == 0); "
-        "ctx->cc.v = 0; "
-        "ctx->cc.c = 0; ";
+                 "ctx->cc.n = (ctx->res < 0); "
+                 "ctx->cc.z = (ctx->res == 0); "
+                 "ctx->cc.v = 0; "
+                 "ctx->cc.c = 0; ";
 
     auto res = std::format("ctx->res = ~{}; ", src);
 
@@ -469,29 +485,40 @@ void Recompiler::jmp(AddressingMode m, u8 xn) {
 }
 
 void Recompiler::movem(DirectionR d, Size s, AddressingMode m, u8 xn, u16 reg_mask) {
-    auto [pre, src, post] = get_value(s, m, xn);
-    std::string val, dst;
+    auto ea = decode_ea(s, m, xn);
+
+    std::string val;
 
     if (d == DirectionR::RegisterToMemory) {
+        flow_.ctx().writeln("/* movem <reg to mem> start */");
         for (u8 i = 0; i < 16; i++) {
+            // TODO move register deoding to decode_movem_reg function
             if (((reg_mask >> (15 - i)) & 0b1) == 0) continue;
             if (i < 8)
-                val = Code::deref_adr(s, Code::an(7 - i));
+                val = Code::an(7 - i) + "-ctx->mem";
             else
                 val = Code::dn(15 - i);
-            dst = Code::set_adr(Size::Long, src, val);
-            flow_.ctx().writeln(pre + dst + post + "// movem reg to mem");
+
+            auto [pre, dst, post] = fmt_set_value(ea, val);
+
+            flow_.ctx().writeln(pre + dst + post);
         }
+        flow_.ctx().writeln("/* movem <reg to mem> end */");
     } else if (d == DirectionR::MemoryToRegister) {
+        flow_.ctx().writeln("/* movem <mem to reg> start */");
+        auto [pre, src, post] = fmt_get_value(ea);
+
         for (u8 i = 0; i < 16; i++) {
+            // TODO move register deoding to decode_movem_reg function
             if (((reg_mask >> (15 - i)) & 0b1) == 0) continue;
-            val = Code::deref_adr(s, src);
             if (i < 8)
-                dst = Code::set_adr(Size::Long, Code::dn(i), val);
+                val = Code::set_dn(i, src);
             else
-                dst = Code::set_adr(Size::Long, Code::an(i - 8), val);
-            flow_.ctx().writeln(pre + dst + post + "// movem mem to reg");
+                val = Code::set_an(i - 8, "ctx->mem+" + src);
+
+            flow_.ctx().writeln(pre + val + post);
         }
+        flow_.ctx().writeln("/* movem <mem to reg> end */");
     }
 }
 
@@ -651,11 +678,11 @@ void Recompiler::or_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
     auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
 
     if (d == DirectionO::ea_x_Dn_to_ea) {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} | {}", m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} | {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // or to ea");
     } else {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} | {}", m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} | {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // or to dn");
     }
@@ -669,26 +696,24 @@ void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
     auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
 
     if (d == DirectionO::ea_x_Dn_to_ea) {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} - {}", m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} - {}", ea_res, dn_res));
 
         dst_pre += std::format("RES({}); ", ea_res);
         std::string flag_cv = std::format(" "
-            "ctx->cc.v=(({0}^{1})&({0}^ctx->res))>>{2}; "
-            "ctx->cc.c=({3})ctx->res<({3}){0}; ",
-            m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s)
-        );
+                                          "ctx->cc.v=(({0}^{1})&({0}^ctx->res))>>{2}; "
+                                          "ctx->cc.c=({3})ctx->res<({3}){0}; ",
+                                          ea_res, dn_res, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s));
 
         std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // sub to ea");
     } else {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} - {}", m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} - {}", ea_res, dn_res));
 
         dst_pre += std::format("RES({}); ", dn_res);
         std::string flag_cv = std::format(" "
-            "ctx->cc.v=(({0}^{1})&({1}^ctx->res))>>{2}; "
-            "ctx->cc.c=({3})ctx->res<({3}){1}; ",
-            m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s)
-        );
+                                          "ctx->cc.v=(({0}^{1})&({1}^ctx->res))>>{2}; "
+                                          "ctx->cc.c=({3})ctx->res<({3}){1}; ",
+                                          ea_res, dn_res, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s));
 
         std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", dn_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // sub to dn");
@@ -711,11 +736,11 @@ void Recompiler::eor_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
     auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
 
     if (d == DirectionO::ea_x_Dn_to_ea) {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} ^ {}", m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} ^ {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // eor to ea");
     } else {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} ^ {}", m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} ^ {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // eor to dn");
     }
@@ -772,11 +797,11 @@ void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
     auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
 
     if (d == DirectionO::ea_x_Dn_to_ea) {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} & {}", m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} & {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // and to ea");
     } else {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} & {}", m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} & {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // and to dn");
     }
@@ -790,26 +815,29 @@ void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
     auto [ea_pre, ea_res, ea_post] = fmt_get_value(ea_dec);
 
     if (d == DirectionO::ea_x_Dn_to_ea) {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} + {}", m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res));
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} + {}", ea_res, dn_res));
 
         dst_pre += std::format("RES({}); ", ea_res);
         std::string flag_cv = std::format(" "
-            "ctx->cc.v=(({0}^{1})&({0}^ctx->res))>>{2}; "
-            "ctx->cc.c=({3})ctx->res>({3}){0}; ",
-            m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s)
-        );
+                                          "ctx->cc.v=(({0}^{1})&({0}^ctx->res))>>{2}; "
+                                          "ctx->cc.c=({3})ctx->res>({3}){0}; ",
+                                          ea_res, dn_res, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s));
 
         std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // add to ea");
     } else {
-        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} + {}", m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res));
+
+        if (ea_dec.mode == AddressingMode::AddressRegister) {
+            ea_res = std::format("({}-ctx->mem)", ea_res);
+        }
+
+        auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} + {}", ea_res, dn_res));
 
         dst_pre += std::format("RES({}); ", dn_res);
         std::string flag_cv = std::format(" "
-            "ctx->cc.v=(({0}^{1})&({1}^ctx->res))>>{2}; "
-            "ctx->cc.c=({3})ctx->res>({3}){1}; ",
-            m==AddressingMode::Address ? std::format("({} - ctx->mem)", ea_res) : ea_res, dn_res, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s)
-        );
+                                          "ctx->cc.v=(({0}^{1})&({1}^ctx->res))>>{2}; "
+                                          "ctx->cc.c=({3})ctx->res>({3}){1}; ",
+                                          ea_res, dn_res, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s));
 
         std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", dn_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // add to dn");
@@ -827,8 +855,8 @@ void Recompiler::adda_(u8 an, Size s, AddressingMode m, u8 xn) {
 
     std::string res;
 
-    if (ea.mode != AddressingMode::Immediate) {
-        res = std::format("{0} = {0} + ({1} - {0});", Code::an(an), src);
+    if (ea.mode == AddressingMode::AddressRegister) {
+        res = std::format("{} += {} - ctx->mem;", Code::an(an), src);
     } else {
         res = std::format("{} += {};", Code::an(an), src);
     }
@@ -969,7 +997,7 @@ void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post, b
     } else if (!flow_.program().contains(dst_adr)) {
         flow_.add_routine(dst_adr);
         flow_.jmp(dst_adr, exit_on_return);
-    } else if (flow_.program().contains(dst_adr) && exit_on_return){
+    } else if (flow_.program().contains(dst_adr) && exit_on_return) {
         flow_.ret();
     }
 }
@@ -999,7 +1027,7 @@ void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::stri
         }
     }
 
-    if (exit_on_return){
+    if (exit_on_return) {
         flow_.ret();
     }
 }
@@ -1133,6 +1161,7 @@ Recompiler::fmt_set_value(const DecodedEffectiveAddress &ea, const std::string &
         }
         case AddressingMode::AddressRegister: {
             dst = Code::set_an(ea.xn, value);
+            break;
         }
         case AddressingMode::Address: {
             dst = Code::set_adr(ea.size, Code::an(ea.xn), value);
@@ -1202,7 +1231,7 @@ Recompiler::fmt_get_value(const DecodedEffectiveAddress &ea) {
             break;
         }
         case AddressingMode::AddressWithDisplacement: {
-            src = Code::deref_adr(ea.size, std::format("{} + 0x{:X}", Code::an(ea.xn), ea.displacement)); 
+            src = Code::deref_adr(ea.size, std::format("{} + 0x{:X}", Code::an(ea.xn), ea.displacement));
             break;
         }
         case AddressingMode::AddressWithIndex: {
@@ -1225,7 +1254,7 @@ Recompiler::fmt_get_value(const DecodedEffectiveAddress &ea) {
             NOT_IMPLEMENTED break;
         }
         case AddressingMode::PcWithIndex: {
-            src = Code::deref_adr(ea.size, std::format("0x{:X} + {}", ea.pc_with_index, Code::dn(0)));
+            src = Code::deref_adr(ea.size, std::format("{} + {}", Code::imm_adr(ea.pc_with_index), Code::dn(0)));
             break;
         }
     }

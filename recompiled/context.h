@@ -7,9 +7,9 @@ typedef signed char   i8;
 typedef signed short  i16;
 typedef signed int    i32;
 
-#define MOVE_TO_ADR_U8(A, B)
-#define MOVE_TO_ADR_U16(A, B)
-#define MOVE_TO_ADR_U32(A, B)
+#define MOVE_TO_ADR_U8(A, B)    (A)[0] = (B);
+#define MOVE_TO_ADR_U16(A, B)   (A)[0] = ((B) >> 8) & 0xFF; (A)[1] = ((B) >> 0) & 0xFF;
+#define MOVE_TO_ADR_U32(A, B)   (A)[0] = ((B) >> 24) & 0xFF; (A)[1] = ((B) >> 16) & 0xFF; (A)[2] = ((B) >> 8) & 0xFF; (A)[3] = ((B) >> 0) & 0xFF;
 
 #define DEREF_ADR_U8(ADR)  ((ADR)[0])
 #define DEREF_ADR_U16(ADR) (((ADR)[0] << 8) | (ADR)[1])
