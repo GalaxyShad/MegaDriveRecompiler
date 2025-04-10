@@ -386,6 +386,7 @@ void Recompiler::rte() {
 }
 
 void Recompiler::rts() {
+    flow_.ctx().writeln("return;");
     flow_.ret();
 }
 
@@ -641,7 +642,7 @@ void Recompiler::bcc(Condition c, u8 displacement) {
 
     u32 dst_adr = src_.get_pc() + displ;
 
-    call_function(dst_adr, std::format("if {} ", cond), " return; // bcc");
+    call_function(dst_adr, std::format("if {} {{ ", cond), " return; } // bcc");
 }
 
 void Recompiler::moveq(u8 dn, u8 data) {
