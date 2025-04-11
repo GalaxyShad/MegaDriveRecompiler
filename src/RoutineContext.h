@@ -2,6 +2,7 @@
 #define __CLIONPROJECTS_M68K_DISASSEMBLER_SRC_ROUTINECONTEXT_H_
 
 #include "tinyint.h"
+#include <stack>
 #include <string>
 #include <vector>
 
@@ -12,6 +13,8 @@ struct RoutineContext {
     u32 last_pc;
     bool is_translation_finished;
     int jumped_count;
+
+    std::stack<u32> addresses_to_jmp;
 
     std::vector<std::string> line_list;
 

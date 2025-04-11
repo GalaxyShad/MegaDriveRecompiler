@@ -5,6 +5,7 @@
 #include "SourceBinary.h"
 #include <format>
 #include <map>
+#include <ranges>
 #include <stack>
 #include <stdexcept>
 #include <string>
@@ -61,7 +62,14 @@ public:
         if (stack_.empty()) {
             throw std::invalid_argument("stack empty");
         }
+
         routine_ = stack_.top()->adr;
+        if (!program_[routine_].addresses_to_jmp.empty()) {
+            jmp(program_[routine_].addresses_to_jmp.top());
+            program_[routine_].addresses_to_jmp.pop();
+            return;
+        }
+
         if (program_[routine_].is_translation_finished) {
             ret();
             return;
@@ -76,6 +84,19 @@ public:
         stack_.push(&program_.at(adr));
         routine_ = adr;
         src_.set_pc(adr);
+    }
+
+    void jmp_multiple(std::vector<u32> addresses, bool exit_on_return = false) {
+        if (addresses.empty())
+            return;
+        
+        for (auto a : std::ranges::reverse_view(addresses)) {
+            if (!program_.contains(a)) {
+                add_routine(a);
+                program_.at(a).last_pc = a;
+                stack_.push(&program_.at(a));
+            }
+        }
     }
 
     const std::vector<i32>& get_xn_list_for_adr(u32 adr) {
