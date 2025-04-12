@@ -680,6 +680,7 @@ void Recompiler::or_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // or to ea");
     } else {
+        if (ea_dec.mode == AddressingMode::AddressRegister) ea_res = std::format("({}-ctx->mem)", ea_res);
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} | {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // or to dn");
@@ -705,6 +706,7 @@ void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
         std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // sub to ea");
     } else {
+        if (ea_dec.mode == AddressingMode::AddressRegister) ea_res = std::format("({}-ctx->mem)", ea_res);
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} - {}", ea_res, dn_res));
 
         dst_pre += std::format("RES({}); ", dn_res);
@@ -738,6 +740,7 @@ void Recompiler::eor_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // eor to ea");
     } else {
+        if (ea_dec.mode == AddressingMode::AddressRegister) ea_res = std::format("({}-ctx->mem)", ea_res);
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} ^ {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // eor to dn");
@@ -799,6 +802,7 @@ void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // and to ea");
     } else {
+        if (ea_dec.mode == AddressingMode::AddressRegister) ea_res = std::format("({}-ctx->mem)", ea_res);
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} & {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // and to dn");
@@ -824,11 +828,7 @@ void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
         std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // add to ea");
     } else {
-
-        if (ea_dec.mode == AddressingMode::AddressRegister) {
-            ea_res = std::format("({}-ctx->mem)", ea_res);
-        }
-
+        if (ea_dec.mode == AddressingMode::AddressRegister) ea_res = std::format("({}-ctx->mem)", ea_res);
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} + {}", ea_res, dn_res));
 
         dst_pre += std::format("RES({}); ", dn_res);
