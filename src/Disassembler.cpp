@@ -3,6 +3,10 @@
 #include "ident.h"
 
 void Disassembler::disassemble() {
+    if (src_.get_pc() == 0x0000) {
+        ;
+    }
+    
     u16 op = src_.get_next_word();
 
     // http://goldencrystal.free.fr/M68kOpcodes-v2.3.pdf
@@ -10,7 +14,8 @@ void Disassembler::disassemble() {
 
     if ((op & 0b1111111111111111) == 0b0000000000111100) {
         // ORI to CCR
-        u8 im = src_.get_next_byte();
+        // u8 im = src_.get_next_byte();
+        u16 im = src_.get_next_word() & 0xFF;
         n_->ori_to_ccr(im);
     } else if ((op & 0b1111111111111111) == 0b0000000001111100) {
         // ORI to SR
@@ -25,7 +30,8 @@ void Disassembler::disassemble() {
         n_->ori(size, ident::ident_effective_adr(m, xn), xn, src_.get_next_by_size(size));
     } else if ((op & 0b1111111111111111) == 0b0000001000111100) {
         // ANDI to CCR
-        u8 im = src_.get_next_byte();
+        // u8 im = src_.get_next_byte();
+        u16 im = src_.get_next_word() & 0xFF;
         n_->andi_to_ccr(im);
     } else if ((op & 0b1111111111111111) == 0b0000001001111100) {
         // ANDI to SR
@@ -54,7 +60,8 @@ void Disassembler::disassemble() {
         n_->addi(size, ident::ident_effective_adr(m, xn), xn, src_.get_next_by_size(size));
     } else if ((op & 0b1111111111111111) == 0b0000101000111100) {
         // EORI to CCR
-        u8 im = src_.get_next_byte();
+        // u8 im = src_.get_next_byte();
+        u16 im = src_.get_next_word() & 0xFF;
         n_->eori_to_ccr(im);
     } else if ((op & 0b1111111111111111) == 0b0000101001111100) {
         // EORI to SR
