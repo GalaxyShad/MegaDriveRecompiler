@@ -111,6 +111,16 @@ public:
         return known_xn_values_->at(adr);
     }
 
+    void add_stack(u32 adr){ 
+        stack_.push(&program_.at(adr));
+    }
+    void set_routine(u32 adr){ 
+        routine_ = adr;
+    }
+    void set_program(u32 adr){
+        program_.at(adr).last_pc = adr;
+    }
+
 private:
     void add_routine_and_jmp(u32 adr) {
         add_routine(adr);
