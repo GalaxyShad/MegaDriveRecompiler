@@ -402,7 +402,48 @@ void Recompiler::jsr(AddressingMode m, u8 xn) {
 
     switch (m) {
         case AddressingMode::Address: {
-            call_xn_function(src_.get_pc() - 2, 0, std::format("{} - ctx->mem", Code::an(xn)), "", "", false, " // jsr addres");
+            // call_xn_function(src_.get_pc() - 2, 0, std::format("{} - ctx->mem", Code::an(xn)), "", "", false, " // jsr addres");
+            u32 pc = src_.get_pc() - 2;
+            u32 dst_adr = 0;
+            std::string _xn = std::format("{} - ctx->mem", Code::an(xn));
+            std::string pre = "";
+            std::string post = "";
+            bool exit_on_return = false;
+            std::string comment = " // jsr addres";
+
+            auto &xn_list = flow_.get_xn_list_for_adr(pc);
+
+            flow_.ctx().writeln(std::format("switch ({}) {{{}", _xn, comment));
+            for (auto &i: xn_list) {
+                u32 adr = dst_adr + ((u32)i);
+                auto fn_name = flow_.get_name_for_label(adr);
+        
+                flow_.ctx().writeln(std::format("\tcase {}: {} break;", Code::imm(i), pre + Code::call_function(fn_name) + post));
+            }
+            flow_.ctx().writeln("}");
+        
+        
+            std::vector<u32> addresses;
+            for (auto &j: xn_list) {
+                u32 adr = dst_adr + ((u32)j);
+                addresses.push_back(adr);
+            }
+            // flow_.jmp_multiple(addresses, exit_on_return);
+            if (!addresses.empty()){
+                for (auto a : std::ranges::reverse_view(addresses)) {
+                    if (!flow_.program().contains(a)) {
+                        flow_.add_routine(a);
+
+                        flow_.add_stack(a);
+                        flow_.set_routine(a);
+                        src_.set_pc(a);
+                    }
+                }
+                if (exit_on_return) {
+                    flow_.ret();
+                }
+            }
+            
             break;
         }
         case AddressingMode::AddressWithDisplacement:
