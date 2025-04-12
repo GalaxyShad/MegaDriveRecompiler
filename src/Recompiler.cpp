@@ -397,6 +397,7 @@ void Recompiler::rtr() {
 }
 
 void Recompiler::jsr(AddressingMode m, u8 xn) {
+    // SP – 4 → SP; PC → (SP); Destination Address → PC
     auto ea = decode_ea(Size::Word, m, xn);
 
     switch (m) {
@@ -440,6 +441,7 @@ void Recompiler::jsr(AddressingMode m, u8 xn) {
 }
 
 void Recompiler::jmp(AddressingMode m, u8 xn) {
+    // Destination Address → PC
     auto ea = decode_ea(Size::Word, m, xn);
     auto [pre, src, post] = fmt_get_value(ea);
     switch (m) {
@@ -596,21 +598,19 @@ void Recompiler::scc(Condition c, AddressingMode m, u8 xn) {
 }
 
 void Recompiler::dbcc(Condition c, u8 dn, u16 displacement) {
+    // If Condition False
+    //     Then (Dn – 1 → Dn; If Dn ≠ – 1
+    //         Then PC + dn → PC)
     auto cond = make_condition(c);
-
     i16 displ = displacement-2;
-
     u32 dst_adr = src_.get_pc() + displ;
 
     call_function(dst_adr, std::format("if (!{0}) {{ {1}--; if({1} != -1) {{ ", cond, Code::dn(dn)), " return; }} // dbcc");
 }
 
 void Recompiler::bra(u8 displacement) {
-    i16 displ = (displacement == 0) ? src_.get_next_word() : (i8) displacement;
-    if (displacement == 0) {
-        displ -= 2;
-    }
-
+    // PC + dn → PC
+    i16 displ = (displacement == 0) ? src_.get_next_word() - 2 : (i8) displacement;
     u32 dst_adr = src_.get_pc() + displ;
 
     flow_.ctx().is_translation_finished = true;
@@ -619,24 +619,18 @@ void Recompiler::bra(u8 displacement) {
 }
 
 void Recompiler::bsr(u8 displacement) {
-    i16 displ = (displacement == 0) ? src_.get_next_word() : (i8) displacement;
-    if (displacement == 0) {
-        displ -= 2;
-    }
-
+    // SP – 4 → SP; PC → (SP); PC + dn → PC
+    i16 displ = (displacement == 0) ? src_.get_next_word() - 2 : (i8) displacement;
     u32 dst_adr = src_.get_pc() + displ;
 
     call_function(dst_adr, "", " // bsr");
 }
 
 void Recompiler::bcc(Condition c, u8 displacement) {
+    // If Condition True
+    //     Then PC + dn → PC
     auto cond = make_condition(c);
-
-    i16 displ = (displacement == 0) ? src_.get_next_word() : (i8) displacement;
-    if (displacement == 0) {
-        displ -= 2;
-    }
-
+    i16 displ = (displacement == 0) ? src_.get_next_word() - 2 : (i8) displacement;
     u32 dst_adr = src_.get_pc() + displ;
 
     call_function(dst_adr, std::format("if {} {{ ", cond), " return; } // bcc");
@@ -646,22 +640,22 @@ void Recompiler::moveq(u8 dn, u8 data) {
     flow_.ctx().writeln(Code::set_dn(dn, Code::imm(data)) + " // moveq");
 }
 
-void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) {///
+void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) {
     auto [pre, res, post] = get_value(Size::Word, m, xn);
 
-    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF))", pre, res, Code::dn(dn));
-    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8)", Code::dn(dn), res);
+    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF)) ", pre, res, Code::dn(dn));
+    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8); ", Code::dn(dn), res);
     std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", res);
-    flow_.ctx().writeln(pre_ + res_ + flags + post);
+    flow_.ctx().writeln(pre_ + res_ + flags + post + " // divu");
 }
 
-void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) {///
+void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) {
     auto [pre, res, post] = get_value(Size::Word, m, xn);
 
-    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF))", pre, res, Code::dn(dn));
-    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8)", Code::dn(dn), res);
+    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF)) ", pre, res, Code::dn(dn));
+    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8); ", Code::dn(dn), res);
     std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", res);
-    flow_.ctx().writeln(pre_ + res_ + flags + post);
+    flow_.ctx().writeln(pre_ + res_ + flags + post + " // divs");
 }
 
 void Recompiler::sbcd(u8 xn, Mode m, u8 xn2) {
