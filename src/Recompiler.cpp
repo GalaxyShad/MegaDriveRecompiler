@@ -596,15 +596,13 @@ void Recompiler::scc(Condition c, AddressingMode m, u8 xn) {
 }
 
 void Recompiler::dbcc(Condition c, u8 dn, u16 displacement) {
+    auto cond = make_condition(c);
 
-    if (c != Condition::False) {
-        NOT_IMPLEMENTED
-    }
+    i16 displ = displacement-2;
 
-    i16 d = displacement;
-    u32 dst_adr = src_.get_pc() + d - 2;
+    u32 dst_adr = src_.get_pc() + displ;
 
-    call_function(dst_adr, std::format("{0}--; if ({0} != -1) ", Code::dn(dn)), " // dbcc");
+    call_function(dst_adr, std::format("if (!{0}) {{ {1}--; if({1} != -1) {{ ", cond, Code::dn(dn)), " return; }} // dbcc");
 }
 
 void Recompiler::bra(u8 displacement) {
