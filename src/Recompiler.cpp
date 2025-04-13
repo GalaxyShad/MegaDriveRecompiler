@@ -614,9 +614,7 @@ void Recompiler::bra(u8 displacement) {
     i16 displ = (displacement == 0) ? src_.get_next_word() - 2 : (i8) displacement;
     u32 dst_adr = src_.get_pc() + displ;
 
-    flow_.ctx().is_translation_finished = true;
     call_function(dst_adr, "", " return; // bra", true);
-    flow_.ctx().is_translation_finished = false;
 }
 
 void Recompiler::bsr(u8 displacement) {
