@@ -70,11 +70,9 @@ public:
         //     program_[routine_].addresses_to_jmp.pop();
         //     return;
         // }
-
-        if (program_[routine_].is_translation_finished) {
+        
+        if (program_[routine_].is_translation_finished)
             ret();
-            return;
-        }
         src_.set_pc(program_[routine_].last_pc);
     }
 
@@ -87,16 +85,19 @@ public:
     }
 
     void jmp_multiple(std::vector<u32> addresses, bool exit_on_return = false) {
-        if (addresses.empty())
-            return;
-        
-        for (auto a : std::ranges::reverse_view(addresses)) {
-            if (!program_.contains(a)) {
-                add_routine(a);
-                program_.at(a).last_pc = a;
-                stack_.push(&program_.at(a));
+        auto& _ = ctx().is_translation_finished;
+
+        if (!addresses.empty()){
+            for (auto a : addresses) {
+                if (!program_.contains(a)) {
+                    add_routine(a);
+                    jmp(a);
+                }
             }
+            _ = exit_on_return;
+            return;
         }
+        if(_) ret();
     }
 
     const std::vector<i32>& get_xn_list_for_adr(u32 adr) {

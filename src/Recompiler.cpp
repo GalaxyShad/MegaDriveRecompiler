@@ -530,50 +530,6 @@ void Recompiler::jmp(AddressingMode m, u8 xn) {
         case AddressingMode::Address: {
             call_xn_function(src_.get_pc() - 2, 0, std::format("{} - ctx->mem", Code::an(xn)),
                 pre, post + " return;", true, "// jmp Address");
-
-            // u32 pc = src_.get_pc() - 2;
-            // u32 dst_adr = 0;
-            // std::string _xn = std::format("{} - ctx->mem",Code::an(xn));
-            // post += " return;";
-            // bool exit_on_return = true;
-            // std::string comment = "// jmp Address";
-
-            // auto &xn_list = flow_.get_xn_list_for_adr(pc);
-
-            // flow_.ctx().writeln(std::format("switch ({}) {{{}", _xn, comment));
-            // for (auto &i: xn_list) {
-            //     u32 adr = dst_adr + ((u32)i);
-            //     auto fn_name = flow_.get_name_for_label(adr);
-
-            //     flow_.ctx().writeln(std::format("\tcase {}: {} break;", Code::imm(i), pre + Code::call_function(fn_name) + post));
-            // }
-            // flow_.ctx().writeln("}");
-            // flow_.ctx().writeln("return; // TODO fix");
-
-            // std::vector<u32> addresses;
-            // for (auto &j: xn_list) {
-            //     u32 adr = dst_adr + ((u32)j);
-            //     addresses.push_back(adr);
-            // }
-            // // flow_.jmp_multiple(addresses, exit_on_return);
-            // if (!addresses.empty()){
-            //     for (auto a : std::ranges::reverse_view(addresses)) {
-            //         if (!flow_.program().contains(a)) {
-            //             flow_.add_routine(a);
-
-                        
-            //             flow_.ctx().last_pc = src_.get_pc();
-            //             flow_.ctx().is_translation_finished = exit_on_return;
-            //             flow_.add_stack(a);
-            //             flow_.set_routine(a);
-            //             src_.set_pc(a);
-            //         }
-            //     }
-            // }
-            // if (exit_on_return) {
-            //     flow_.ret();
-            // }
-
             break;
         }
         case AddressingMode::AddressWithDisplacement:
@@ -583,13 +539,11 @@ void Recompiler::jmp(AddressingMode m, u8 xn) {
         }
 
         case AddressingMode::AbsWord: {
-            flow_.ctx().is_translation_finished = true;
             call_function(ea.abs_word_adr, "", " return;", true);
             break;
         }
 
         case AddressingMode::AbsLong: {
-            flow_.ctx().is_translation_finished = true;
             call_function(ea.abs_long_adr, "", " return;", true);
             break;
         }
@@ -602,52 +556,6 @@ void Recompiler::jmp(AddressingMode m, u8 xn) {
         case AddressingMode::PcWithIndex: {
             call_xn_function(src_.get_pc() - 4, ea.pc_with_index, Code::dn(ea.dst_xn),
                 "", " return;", true, "// jmp PcWithIndex");
-
-            // u32 pc = src_.get_pc() - 4;
-            // u32 dst_adr = ea.pc_with_index;
-            // std::string xn = Code::dn(ea.dst_xn);
-            // std::string pre = "";
-            // std::string post = " return;";
-            // bool exit_on_return = true;
-            // std::string comment = " // jmp PcWithIndex";
-
-            // auto &xn_list = flow_.get_xn_list_for_adr(pc);
-
-            // flow_.ctx().writeln(std::format("switch ({}) {{{}", xn, comment));
-            // for (auto &i: xn_list) {
-            //     u32 adr = dst_adr + ((u32)i);
-            //     auto fn_name = flow_.get_name_for_label(adr);
-        
-            //     flow_.ctx().writeln(std::format("\tcase {}: {} break;", Code::imm(i), pre + Code::call_function(fn_name) + post));
-            // }
-            // flow_.ctx().writeln("}");
-            // flow_.ctx().writeln("return; // TODO fix");
-        
-        
-            // std::vector<u32> addresses;
-            // for (auto &j: xn_list) {
-            //     u32 adr = dst_adr + ((u32)j);
-            //     addresses.push_back(adr);
-            // }
-            
-            // // flow_.jmp_multiple(addresses, exit_on_return);
-            // if (!addresses.empty()){
-            //     for (auto a : addresses) {
-            //         if (!flow_.program().contains(a)) {
-            //             flow_.add_routine(a);
-
-            //             flow_.ctx().last_pc = src_.get_pc();
-            //             flow_.ctx().is_translation_finished = exit_on_return;
-            //             flow_.add_stack(a);
-            //             flow_.set_routine(a);
-            //             src_.set_pc(a);
-            //         }
-            //     }
-            //     if (exit_on_return) {
-            //         flow_.ret();
-            //     }
-            // }
-
             break;
         }
 
@@ -1160,9 +1068,10 @@ void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post, b
 
     flow_.ctx().writeln(pre + Code::call_function(fn_name) + post);
 
-    if (flow_.ctx().adr == adr) {
-        flow_.ret();
-    } else if (!flow_.program().contains(adr)) {
+    // if (flow_.ctx().adr == adr) {
+    //     flow_.ret();
+    // } else
+    if (!flow_.program().contains(adr)) {
         flow_.add_routine(adr);
         flow_.jmp(adr, exit_on_return);
     } else if (flow_.program().contains(adr) && exit_on_return) {
@@ -1186,14 +1095,10 @@ void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::stri
     std::vector<u32> addresses;
     for (auto &j: xn_list) {
         u32 adr = dst_adr + ((u32)j);
-        addresses.push_back(adr);
+        if (!flow_.program().contains(adr)) addresses.push_back(adr);
     }
 
     flow_.jmp_multiple(addresses, exit_on_return);
-
-    if (exit_on_return) {
-        flow_.ret();
-    }
 }
 
 std::tuple<std::string, std::string, std::string>
