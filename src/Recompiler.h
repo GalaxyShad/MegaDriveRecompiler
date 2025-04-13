@@ -127,27 +127,17 @@ public:
     void write_all_to_file();
 
 private:
-    std::tuple<std::string, std::string, std::string>
-    set_value(Size s, AddressingMode m, u8 xn, const std::string &value);
-
-    std::tuple<std::string, std::string, std::string>
-    get_value(Size s, AddressingMode m, u8 xn = 0, u8 dst_xn = 0xFF);
-
-    std::tuple<std::string, std::string, std::string>
-    upd_value(Size s, AddressingMode m, u8 xn, const std::string &operation);
-
-    std::tuple<std::string, std::string, std::string>
-    fmt_get_value(const DecodedEffectiveAddress &ea);
-
-    std::tuple<std::string, std::string, std::string>
-    fmt_set_value(const DecodedEffectiveAddress &ea, const std::string &value);
-
     DecodedEffectiveAddress decode_ea(Size s, AddressingMode m, u8 xn, u8 src_xn = 0xFF);
-
     std::string make_condition(Condition c);
 
-    void call_function(u32 dst_adr, std::string pre = "", std::string post = "", bool exit_on_return = false);
+    std::tuple<std::string, std::string, std::string> set_value(Size s, AddressingMode m, u8 xn, const std::string &value);
+    std::tuple<std::string, std::string, std::string> get_value(Size s, AddressingMode m, u8 xn = 0, u8 dst_xn = 0xFF);
+    std::tuple<std::string, std::string, std::string> upd_value(Size s, AddressingMode m, u8 xn, const std::string &operation);
+    std::tuple<std::string, std::string, std::string> fmt_get_value(const DecodedEffectiveAddress &ea);
+    std::tuple<std::string, std::string, std::string> fmt_set_value(const DecodedEffectiveAddress &ea, const std::string &value);
 
+
+    void call_function(u32 dst_adr, std::string pre = "", std::string post = "", bool exit_on_return = false);
     void call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::string pre = "", std::string post = "", bool exit_on_return = false, std::string comment="");
 
     SourceBinary &src_;

@@ -12,10 +12,8 @@ struct RoutineContext {
 
     u32 last_pc;
     bool is_translation_finished;
-    int jumped_count;
 
-    std::stack<u32> addresses_to_jmp;
-
+    // std::stack<u32> addresses_to_jmp;
     std::vector<std::string> line_list;
 
     void writeln(const std::string &line) { line_list.push_back(line); }
