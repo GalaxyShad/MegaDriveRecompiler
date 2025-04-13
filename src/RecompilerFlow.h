@@ -94,10 +94,9 @@ public:
                     jmp(a);
                 }
             }
-            _ = exit_on_return;
-            return;
         }
-        if(_) ret();
+        
+        _ = exit_on_return;
     }
 
     const std::vector<i32>& get_xn_list_for_adr(u32 adr) {

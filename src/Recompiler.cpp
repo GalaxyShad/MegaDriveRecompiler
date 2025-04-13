@@ -1006,6 +1006,7 @@ void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::stri
         flow_.ctx().writeln(std::format("\tcase {}: {} break;", Code::imm(i), pre + Code::call_function(fn_name) + post));
     }
     flow_.ctx().writeln("}");
+    if(exit_on_return) flow_.ctx().writeln("return;");
 
 
     std::vector<u32> addresses;
@@ -1013,8 +1014,10 @@ void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::stri
         u32 adr = dst_adr + ((u32)j);
         if (!flow_.program().contains(adr)) addresses.push_back(adr);
     }
-
-    flow_.jmp_multiple(addresses, exit_on_return);
+    if(!addresses.empty())
+        flow_.jmp_multiple(addresses, exit_on_return);
+    else if (exit_on_return)
+        flow_.ret();
 }
 
 std::tuple<std::string, std::string, std::string>
