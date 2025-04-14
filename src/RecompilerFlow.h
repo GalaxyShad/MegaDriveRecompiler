@@ -111,16 +111,6 @@ public:
         return known_xn_values_->at(adr);
     }
 
-    void add_stack(u32 adr){ 
-        stack_.push(&program_.at(adr));
-    }
-    void set_routine(u32 adr){ 
-        routine_ = adr;
-    }
-    void set_program(u32 adr){
-        program_.at(adr).last_pc = adr;
-    }
-
 private:
     std::map<u32, RoutineContext> program_;
     std::stack<RoutineContext *> stack_;
