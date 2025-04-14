@@ -16,12 +16,14 @@ class RecompilerFlow {
 public:
     RecompilerFlow(SourceBinary &source)
         : src_(source), routine_(source.get_pc()) {
-        add_routine_and_jmp(source.get_pc());
+        add_routine(source.get_pc());
+        jmp(source.get_pc());
     }
 
     RecompilerFlow(SourceBinary &source, std::unordered_map<u32, std::string> &known_labels)
         : src_(source), known_labels_(&known_labels), routine_(source.get_pc()) {
-        add_routine_and_jmp(source.get_pc());
+        add_routine(source.get_pc());
+        jmp(source.get_pc());
     }
 
     RoutineContext &ctx() { return program_[routine_]; }
@@ -52,7 +54,6 @@ public:
         program_[adr] = {
             .adr = adr,
             .last_pc = src_.get_pc(),
-            .jumped_count = 0,
             .name = get_name_for_label(adr),
         };
     }
@@ -64,21 +65,18 @@ public:
         }
 
         routine_ = stack_.top()->adr;
-        if (!program_[routine_].addresses_to_jmp.empty()) {
-            jmp(program_[routine_].addresses_to_jmp.top());
-            program_[routine_].addresses_to_jmp.pop();
-            return;
-        }
-
-        if (program_[routine_].is_translation_finished) {
+        // if (!program_[routine_].addresses_to_jmp.empty()) {
+        //     jmp(program_[routine_].addresses_to_jmp.top());
+        //     program_[routine_].addresses_to_jmp.pop();
+        //     return;
+        // }
+        
+        if (program_[routine_].is_translation_finished)
             ret();
-            return;
-        }
         src_.set_pc(program_[routine_].last_pc);
     }
 
     void jmp(u32 adr, bool exit_on_return = false) {
-        program_.at(adr).jumped_count++;
         ctx().last_pc = src_.get_pc();
         ctx().is_translation_finished = exit_on_return;
         stack_.push(&program_.at(adr));
@@ -87,16 +85,18 @@ public:
     }
 
     void jmp_multiple(std::vector<u32> addresses, bool exit_on_return = false) {
-        if (addresses.empty())
-            return;
-        
-        for (auto a : std::ranges::reverse_view(addresses)) {
-            if (!program_.contains(a)) {
-                add_routine(a);
-                program_.at(a).last_pc = a;
-                stack_.push(&program_.at(a));
+        auto& _ = ctx().is_translation_finished;
+
+        if (!addresses.empty()){
+            for (auto a : addresses) {
+                if (!program_.contains(a)) {
+                    add_routine(a);
+                    jmp(a);
+                }
             }
         }
+        
+        _ = exit_on_return;
     }
 
     const std::vector<i32>& get_xn_list_for_adr(u32 adr) {
@@ -112,12 +112,6 @@ public:
     }
 
 private:
-    void add_routine_and_jmp(u32 adr) {
-        add_routine(adr);
-        jmp(adr);
-    }
-
-private:
     std::map<u32, RoutineContext> program_;
     std::stack<RoutineContext *> stack_;
     u32 routine_;
@@ -126,7 +120,6 @@ private:
 
     std::unordered_map<u32, std::string> *known_labels_ = nullptr;
     std::unordered_map<u32, std::vector<i32>> *known_xn_values_ = nullptr;
-    i32 xn_jmp_index_ = 0;
 };
 
 #endif // __CLIONPROJECTS_M68K_DISASSEMBLER_SRC_RECOMPILERFLOW_H_

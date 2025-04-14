@@ -397,6 +397,7 @@ void Recompiler::rtr() {
 }
 
 void Recompiler::jsr(AddressingMode m, u8 xn) {
+    // SP – 4 → SP; PC → (SP); Destination Address → PC
     auto ea = decode_ea(Size::Word, m, xn);
 
     switch (m) {
@@ -440,11 +441,13 @@ void Recompiler::jsr(AddressingMode m, u8 xn) {
 }
 
 void Recompiler::jmp(AddressingMode m, u8 xn) {
+    // Destination Address → PC
     auto ea = decode_ea(Size::Word, m, xn);
     auto [pre, src, post] = fmt_get_value(ea);
     switch (m) {
         case AddressingMode::Address: {
-            call_xn_function(src_.get_pc() - 2, 0, std::format("{} - ctx->mem", Code::an(xn)), pre, post + " return;", false, "// jmp Address");
+            call_xn_function(src_.get_pc() - 2, 0, std::format("{} - ctx->mem", Code::an(xn)),
+                pre, post + " return;", true, "// jmp Address");
             break;
         }
         case AddressingMode::AddressWithDisplacement:
@@ -454,13 +457,11 @@ void Recompiler::jmp(AddressingMode m, u8 xn) {
         }
 
         case AddressingMode::AbsWord: {
-            flow_.ctx().is_translation_finished = true;
             call_function(ea.abs_word_adr, "", " return;", true);
             break;
         }
 
         case AddressingMode::AbsLong: {
-            flow_.ctx().is_translation_finished = true;
             call_function(ea.abs_long_adr, "", " return;", true);
             break;
         }
@@ -469,8 +470,10 @@ void Recompiler::jmp(AddressingMode m, u8 xn) {
             NOT_IMPLEMENTED
             break;
         }
+
         case AddressingMode::PcWithIndex: {
-            call_xn_function(src_.get_pc() - 4, ea.pc_with_index, Code::dn(ea.dst_xn), "", " return;", false, "// jmp PcWithIndex");
+            call_xn_function(src_.get_pc() - 4, ea.pc_with_index, Code::dn(ea.dst_xn),
+                "", " return;", true, "// jmp PcWithIndex");
             break;
         }
 
@@ -596,49 +599,37 @@ void Recompiler::scc(Condition c, AddressingMode m, u8 xn) {
 }
 
 void Recompiler::dbcc(Condition c, u8 dn, u16 displacement) {
+    // If Condition False
+    //     Then (Dn – 1 → Dn; If Dn ≠ – 1
+    //         Then PC + dn → PC)
+    auto cond = make_condition(c);
+    i16 displ = displacement-2;
+    u32 dst_adr = src_.get_pc() + displ;
 
-    if (c != Condition::False) {
-        NOT_IMPLEMENTED
-    }
-
-    i16 d = displacement;
-    u32 dst_adr = src_.get_pc() + d - 2;
-
-    call_function(dst_adr, std::format("{0}--; if ({0} != -1) ", Code::dn(dn)), " // dbcc");
+    call_function(dst_adr, std::format("if (!{0}) {{ {1}--; if({1} != -1) {{ ", cond, Code::dn(dn)), " return; }} // dbcc");
 }
 
 void Recompiler::bra(u8 displacement) {
-    i16 displ = (displacement == 0) ? src_.get_next_word() : (i8) displacement;
-    if (displacement == 0) {
-        displ -= 2;
-    }
-
+    // PC + dn → PC
+    i16 displ = (displacement == 0) ? src_.get_next_word() - 2 : (i8) displacement;
     u32 dst_adr = src_.get_pc() + displ;
 
-    flow_.ctx().is_translation_finished = true;
     call_function(dst_adr, "", " return; // bra", true);
-    flow_.ctx().is_translation_finished = false;
 }
 
 void Recompiler::bsr(u8 displacement) {
-    i16 displ = (displacement == 0) ? src_.get_next_word() : (i8) displacement;
-    if (displacement == 0) {
-        displ -= 2;
-    }
-
+    // SP – 4 → SP; PC → (SP); PC + dn → PC
+    i16 displ = (displacement == 0) ? src_.get_next_word() - 2 : (i8) displacement;
     u32 dst_adr = src_.get_pc() + displ;
 
     call_function(dst_adr, "", " // bsr");
 }
 
 void Recompiler::bcc(Condition c, u8 displacement) {
+    // If Condition True
+    //     Then PC + dn → PC
     auto cond = make_condition(c);
-
-    i16 displ = (displacement == 0) ? src_.get_next_word() : (i8) displacement;
-    if (displacement == 0) {
-        displ -= 2;
-    }
-
+    i16 displ = (displacement == 0) ? src_.get_next_word() - 2 : (i8) displacement;
     u32 dst_adr = src_.get_pc() + displ;
 
     call_function(dst_adr, std::format("if {} {{ ", cond), " return; } // bcc");
@@ -648,22 +639,22 @@ void Recompiler::moveq(u8 dn, u8 data) {
     flow_.ctx().writeln(Code::set_dn(dn, Code::imm(data)) + " // moveq");
 }
 
-void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) {///
+void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) {
     auto [pre, res, post] = get_value(Size::Word, m, xn);
 
-    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF))", pre, res, Code::dn(dn));
-    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8)", Code::dn(dn), res);
+    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF)) ", pre, res, Code::dn(dn));
+    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8); ", Code::dn(dn), res);
     std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", res);
-    flow_.ctx().writeln(pre_ + res_ + flags + post);
+    flow_.ctx().writeln(pre_ + res_ + flags + post + " // divu");
 }
 
-void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) {///
+void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) {
     auto [pre, res, post] = get_value(Size::Word, m, xn);
 
-    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF))", pre, res, Code::dn(dn));
-    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8)", Code::dn(dn), res);
+    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF)) ", pre, res, Code::dn(dn));
+    std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8); ", Code::dn(dn), res);
     std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", res);
-    flow_.ctx().writeln(pre_ + res_ + flags + post);
+    flow_.ctx().writeln(pre_ + res_ + flags + post + " // divs");
 }
 
 void Recompiler::sbcd(u8 xn, Mode m, u8 xn2) {
@@ -682,6 +673,7 @@ void Recompiler::or_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // or to ea");
     } else {
+        if (ea_dec.mode == AddressingMode::AddressRegister) ea_res = std::format("({}-ctx->mem)", ea_res);
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} | {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // or to dn");
@@ -707,6 +699,7 @@ void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
         std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // sub to ea");
     } else {
+        if (ea_dec.mode == AddressingMode::AddressRegister) ea_res = std::format("({}-ctx->mem)", ea_res);
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} - {}", ea_res, dn_res));
 
         dst_pre += std::format("RES({}); ", dn_res);
@@ -740,6 +733,7 @@ void Recompiler::eor_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // eor to ea");
     } else {
+        if (ea_dec.mode == AddressingMode::AddressRegister) ea_res = std::format("({}-ctx->mem)", ea_res);
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} ^ {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // eor to dn");
@@ -801,6 +795,7 @@ void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // and to ea");
     } else {
+        if (ea_dec.mode == AddressingMode::AddressRegister) ea_res = std::format("({}-ctx->mem)", ea_res);
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} & {}", ea_res, dn_res));
         std::string flags = std::format(" RES({}); CCN(); CCZ(); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
         flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // and to dn");
@@ -826,11 +821,7 @@ void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {///
         std::string flags = std::format("RES({}); CCN(); CCZ(); ctx->cc.x=ctx->cc.c;", ea_res);
         flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // add to ea");
     } else {
-
-        if (ea_dec.mode == AddressingMode::AddressRegister) {
-            ea_res = std::format("({}-ctx->mem)", ea_res);
-        }
-
+        if (ea_dec.mode == AddressingMode::AddressRegister) ea_res = std::format("({}-ctx->mem)", ea_res);
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} + {}", ea_res, dn_res));
 
         dst_pre += std::format("RES({}); ", dn_res);
@@ -993,9 +984,10 @@ void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post, b
 
     flow_.ctx().writeln(pre + Code::call_function(fn_name) + post);
 
-    if (flow_.ctx().adr == adr) {
-        flow_.ret();
-    } else if (!flow_.program().contains(adr)) {
+    // if (flow_.ctx().adr == adr) {
+    //     flow_.ret();
+    // } else
+    if (!flow_.program().contains(adr)) {
         flow_.add_routine(adr);
         flow_.jmp(adr, exit_on_return);
     } else if (flow_.program().contains(adr) && exit_on_return) {
@@ -1014,19 +1006,18 @@ void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::stri
         flow_.ctx().writeln(std::format("\tcase {}: {} break;", Code::imm(i), pre + Code::call_function(fn_name) + post));
     }
     flow_.ctx().writeln("}");
+    if(exit_on_return) flow_.ctx().writeln("return;");
 
 
     std::vector<u32> addresses;
     for (auto &j: xn_list) {
         u32 adr = dst_adr + ((u32)j);
-        addresses.push_back(adr);
+        if (!flow_.program().contains(adr)) addresses.push_back(adr);
     }
-
-    flow_.jmp_multiple(addresses, exit_on_return);
-
-    if (exit_on_return) {
+    if(!addresses.empty())
+        flow_.jmp_multiple(addresses, exit_on_return);
+    else if (exit_on_return)
         flow_.ret();
-    }
 }
 
 std::tuple<std::string, std::string, std::string>
