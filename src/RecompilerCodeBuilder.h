@@ -7,6 +7,17 @@
 
 class Code {
 public:
+    static std::string op_to_ccr(char op = ' ') {
+        return std::format(
+            "ctx->cc.c {0}= (ctx->res >> 0) & 1; "
+            "ctx->cc.v {0}= (ctx->res >> 1) & 1; "
+            "ctx->cc.z {0}= (ctx->res >> 2) & 1; "
+            "ctx->cc.n {0}= (ctx->res >> 3) & 1; "
+            "ctx->cc.x {0}= (ctx->res >> 4) & 1;",
+            op
+        );
+    }
+
     static std::string if_cond(std::string cond, std::string body) {
         return std::format("if ({}) {{\n", cond) +
                std::format("        {}\n    }}", body);
