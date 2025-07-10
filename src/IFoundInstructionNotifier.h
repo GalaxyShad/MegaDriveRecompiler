@@ -91,13 +91,13 @@ struct IFoundInstructionNotifier {
 
     virtual void asd(RotationDirection d, AddressingMode m, u8 xn) = 0;
     virtual void lsd(RotationDirection d, AddressingMode m, u8 xn) = 0;
-    virtual void rox(RotationDirection d, AddressingMode m, u8 xn) = 0;
+    virtual void roxd(RotationDirection d, AddressingMode m, u8 xn) = 0;
     virtual void rod(RotationDirection d, AddressingMode m, u8 xn) = 0;
     virtual void asd_rotation(u8 rotation, RotationDirection d, Size s,
                               Rotation m, u8 dn) = 0;
     virtual void lsd_rotation(u8 rotation, RotationDirection d, Size s,
                               Rotation m, u8 dn) = 0;
-    virtual void rox_rotation(u8 rotation, RotationDirection d, Size s,
+    virtual void roxd_rotation(u8 rotation, RotationDirection d, Size s,
                               Rotation m, u8 dn) = 0;
     virtual void rod_rotation(u8 rotation, RotationDirection d, Size s,
                               Rotation m, u8 dn) = 0;

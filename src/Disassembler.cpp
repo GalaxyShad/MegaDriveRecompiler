@@ -515,7 +515,7 @@ void Disassembler::disassemble() {
         u8 d = (op >> 8) & 0b1;
         u8 m = (op >> 3) & 0b111;
         u8 xn = (op >> 0) & 0b111;
-        n_->rox(ident::ident_rotationDirection(d), ident::ident_effective_adr(m, xn), xn);
+        n_->roxd(ident::ident_rotationDirection(d), ident::ident_effective_adr(m, xn), xn);
     } else if ((op & 0b1111111011000000) == 0b1110011011000000) {
         // ROd
         u8 d = (op >> 8) & 0b1;
@@ -548,7 +548,7 @@ void Disassembler::disassemble() {
         u8 m = (op >> 5) & 0b1;
         u8 dn = (op >> 0) & 0b111;
         auto size = ident::ident_size(s);
-        n_->rox_rotation(rotation, ident::ident_rotationDirection(d), size, ident::ident_rotation(m), dn);
+        n_->roxd_rotation(rotation, ident::ident_rotationDirection(d), size, ident::ident_rotation(m), dn);
     } else if ((op & 0b1111000000011000) == 0b1110000000011000) {
         // ROd
         u8 d = (op >> 8) & 0b1;

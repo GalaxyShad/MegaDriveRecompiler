@@ -117,11 +117,11 @@ public:
 
     void asd(RotationDirection d, AddressingMode m, u8 xn) override;
     void lsd(RotationDirection d, AddressingMode m, u8 xn) override;
-    void rox(RotationDirection d, AddressingMode m, u8 xn) override;
+    void roxd(RotationDirection d, AddressingMode m, u8 xn) override;
     void rod(RotationDirection d, AddressingMode m, u8 xn) override;
     void asd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) override;
     void lsd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) override;
-    void rox_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) override;
+    void roxd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) override;
     void rod_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) override;
 
     void write_all_to_file();
