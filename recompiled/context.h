@@ -15,10 +15,6 @@ typedef signed int    i32;
 #define DEREF_ADR_U16(ADR) (((ADR)[0] << 8) | (ADR)[1])
 #define DEREF_ADR_U32(ADR) (((ADR)[0] << 24) | ((ADR)[1] << 16) | ((ADR)[2] << 8) | (ADR)[3])
 
-#define RES(X) ctx->res=X
-#define CCN() ctx->cc.n=(ctx->res<0)
-#define CCZ() ctx->cc.z=(ctx->res==0)
-
 #define ROXR(X, Y) 0
 #define ROXL(X, Y) 0
 
