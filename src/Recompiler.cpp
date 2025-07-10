@@ -546,12 +546,12 @@ void Recompiler::addq(u8 data, Size s, AddressingMode m, u8 xn) {
     auto [_spre, src, _spost] = fmt_get_value(dec);
     auto [pre, dst, post] = fmt_set_value(dec, std::format("{} + {}", src, data));
 
-    pre += std::format("ctx->res={}; ", src);
+    pre += std::format("ctx->res={}; ", adr_reg_to_number_if_need(dec, src));
     std::string flag_cv = std::format(" "
                                       "ctx->cc.v=(({0}^{1})&({0}^ctx->res))>>{2}; "
                                       "ctx->cc.c=({3})ctx->res<({3}){0}; ",
-                                      src, data, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s));
-    std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", src);
+                                      adr_reg_to_number_if_need(dec, src), data, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s));
+    std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", adr_reg_to_number_if_need(dec, src));
 
     flow_.ctx().writeln(pre + dst + flag_cv + flags + post + " // addq");
 }
@@ -563,12 +563,12 @@ void Recompiler::subq(u8 data, Size s, AddressingMode m, u8 xn) {
     auto [_spre, src, _spost] = fmt_get_value(dec);
     auto [pre, dst, post] = fmt_set_value(dec, std::format("{} - {}", src, data));
 
-    pre += std::format("ctx->res={}; ", compute_res(dec, src));
+    pre += std::format("ctx->res={}; ", adr_reg_to_number_if_need(dec, src));
     std::string flag_cv = std::format(" "
                                       "ctx->cc.v=(({0}^{1})&({0}^ctx->res))>>{2}; "
                                       "ctx->cc.c=({3})ctx->res<({3}){0}; ",
-                                      src, data, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s));
-    std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", compute_res(dec, src));
+                                      adr_reg_to_number_if_need(dec, src), data, Code::get_u8_sizeof_size(s) - 1, Code::get_sizeof_size(s));
+    std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", adr_reg_to_number_if_need(dec, src));
 
     flow_.ctx().writeln(pre + dst + flag_cv + flags + post + " // subq");
 }
@@ -1204,9 +1204,9 @@ void Recompiler::write_all_to_file() {
     gen.write_to_file();
 };
 
-std::string Recompiler::compute_res(const DecodedEffectiveAddress& ea, const std::string& value) {
+std::string Recompiler::adr_reg_to_number_if_need(const DecodedEffectiveAddress& ea, const std::string& value) {
     if (ea.mode == AddressingMode::AddressRegister) {
-        return std::format("{} - ctx->mem", value);
+        return std::format("({} - ctx->mem)", value);
     }
 
     return value;
