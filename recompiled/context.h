@@ -15,9 +15,6 @@ typedef signed int    i32;
 #define DEREF_ADR_U16(ADR) (((ADR)[0] << 8) | (ADR)[1])
 #define DEREF_ADR_U32(ADR) (((ADR)[0] << 24) | ((ADR)[1] << 16) | ((ADR)[2] << 8) | (ADR)[3])
 
-#define ROXR(X, Y) 0
-#define ROXL(X, Y) 0
-
 typedef struct Context {
     i32 d0, d1, d2, d3, d4, d5, d6, d7;
     u8 *a0, *a1, *a2, *a3, *a4, *a5, *a6, *a7;
