@@ -136,7 +136,7 @@ private:
     std::tuple<std::string, std::string, std::string> fmt_get_value(const DecodedEffectiveAddress &ea);
     std::tuple<std::string, std::string, std::string> fmt_set_value(const DecodedEffectiveAddress &ea, const std::string &value);
 
-
+    std::string compute_res(const DecodedEffectiveAddress& ea, const std::string& value);
     void call_function(u32 dst_adr, std::string pre = "", std::string post = "", bool exit_on_return = false);
     void call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::string pre = "", std::string post = "", bool exit_on_return = false, std::string comment="");
 
