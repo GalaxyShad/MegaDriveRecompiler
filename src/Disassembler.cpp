@@ -7,6 +7,7 @@ void Disassembler::disassemble() {
         ;
     }
     
+    src_.update_current_pc();
     u16 op = src_.get_next_word();
 
     // http://goldencrystal.free.fr/M68kOpcodes-v2.3.pdf

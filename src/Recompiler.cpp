@@ -4,6 +4,7 @@
 #include "RecompilerSourceGenerator.h"
 #include "enums.h"
 #include <format>
+#include <print>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -21,13 +22,13 @@ static void not_impl_(const std::string &fname, RecompilerFlow &flow) {
 void Recompiler::ori_to_ccr(u8 data) {
     auto res = std::format(" ctx->res={}; ", Code::imm(data));
     std::string flags = Code::op_to_ccr('|');
-    flow_.ctx().writeln(res + flags + " // ori to ccr");
+    flow_.ctx().writeln(src_.get_current_pc(), res + flags + " // ori to ccr");
 }
 
 void Recompiler::ori_to_sr(u16 data) {
     auto res = std::format(" ctx->res={}; ", Code::imm(data));
     std::string flags = Code::op_to_ccr('|');
-    flow_.ctx().writeln(res + flags + " // ori to sr");
+    flow_.ctx().writeln(src_.get_current_pc(), res + flags + " // ori to sr");
 }
 
 void Recompiler::ori(Size s, AddressingMode m, u8 xn, u32 data) {
@@ -36,19 +37,19 @@ void Recompiler::ori(Size s, AddressingMode m, u8 xn, u32 data) {
     auto [pre, dst, post] = fmt_set_value(dec, std::format("{} | {}", src, Code::imm(data)));
     std::string flags = std::format(" ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", adr_reg_to_number_if_need(dec, src));
 
-    flow_.ctx().writeln(pre + dst + flags + post + " // ori");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + dst + flags + post + " // ori");
 }
 
 void Recompiler::andi_to_ccr(u8 data) {
     auto res = std::format("ctx->res={}; ", Code::imm(data));
     std::string flags = Code::op_to_ccr('&');
-    flow_.ctx().writeln(res + flags + " // andi to ccr");
+    flow_.ctx().writeln(src_.get_current_pc(), res + flags + " // andi to ccr");
 }
 
 void Recompiler::andi_to_sr(u16 data) {
     auto res = std::format("ctx->res={}; ", Code::imm(data));
     std::string flags = Code::op_to_ccr('&');
-    flow_.ctx().writeln(res + flags + " // andi to sr");
+    flow_.ctx().writeln(src_.get_current_pc(), res + flags + " // andi to sr");
 }
 
 void Recompiler::andi(Size s, AddressingMode m, u8 xn, u32 data) {
@@ -57,7 +58,7 @@ void Recompiler::andi(Size s, AddressingMode m, u8 xn, u32 data) {
     auto [pre, res, post] = fmt_set_value(dec, std::format("{} & {}", src, Code::imm(data)));
     std::string flags = std::format(" ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", adr_reg_to_number_if_need(dec, src));
 
-    flow_.ctx().writeln(pre + res + flags + post + " // andi");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + res + flags + post + " // andi");
 }
 
 void Recompiler::subi(Size s, AddressingMode m, u8 xn, u32 data) {
@@ -73,7 +74,7 @@ void Recompiler::subi(Size s, AddressingMode m, u8 xn, u32 data) {
                                       adr_reg_to_number_if_need(dec, src), imm, Code::get_u8_sizeof_size(s) - 1);
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", adr_reg_to_number_if_need(dec, src));
 
-    flow_.ctx().writeln(pre + dst + flag_cv + flags + post + " // subi");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + dst + flag_cv + flags + post + " // subi");
 }
 
 void Recompiler::addi(Size s, AddressingMode m, u8 xn, u32 data) {
@@ -89,19 +90,19 @@ void Recompiler::addi(Size s, AddressingMode m, u8 xn, u32 data) {
                                       adr_reg_to_number_if_need(dec, src), imm, Code::get_u8_sizeof_size(s) - 1);
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", adr_reg_to_number_if_need(dec, src));
 
-    flow_.ctx().writeln(pre + dst + flag_cv + flags + post + " // addi");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + dst + flag_cv + flags + post + " // addi");
 }
 
 void Recompiler::eori_to_ccr(u8 data) {
     auto res = std::format("ctx->res={}; ", Code::imm(data));
     std::string flags = Code::op_to_ccr('^');
-    flow_.ctx().writeln(res + flags + " // eori to ccr");
+    flow_.ctx().writeln(src_.get_current_pc(), res + flags + " // eori to ccr");
 }
 
 void Recompiler::eori_to_sr(u16 data) {
     auto res = std::format("ctx->res={}; ", Code::imm(data));
     std::string flags = Code::op_to_ccr('^');
-    flow_.ctx().writeln(res + flags + " // eori to sr");
+    flow_.ctx().writeln(src_.get_current_pc(), res + flags + " // eori to sr");
 }
 
 void Recompiler::eori(Size s, AddressingMode m, u8 xn, u32 data) {
@@ -110,7 +111,7 @@ void Recompiler::eori(Size s, AddressingMode m, u8 xn, u32 data) {
     auto [pre, res, post] = fmt_set_value(dec, std::format("{} ^ {}", src, Code::imm(data)));
     std::string flags = std::format(" ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", adr_reg_to_number_if_need(dec, src));
 
-    flow_.ctx().writeln(pre + res + flags + post + " // eori");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + res + flags + post + " // eori");
 }
 
 void Recompiler::cmpi(Size s, AddressingMode m, u8 xn, u32 data) {
@@ -124,7 +125,7 @@ void Recompiler::cmpi(Size s, AddressingMode m, u8 xn, u32 data) {
                              "ctx->cc.c=({0} < {1});",                      // C
                              adr_reg_to_number_if_need(dec, src), Code::imm(data), Code::get_u8_sizeof_size(s) - 1);
 
-    flow_.ctx().writeln(pre + res + post + " // cmpi");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + res + post + " // cmpi");
 }
 
 void Recompiler::btst(AddressingMode m, u8 xn, u8 bitindex) {/*TODO compute_res()*/
@@ -134,7 +135,7 @@ void Recompiler::btst(AddressingMode m, u8 xn, u8 bitindex) {/*TODO compute_res(
     bitindex %= Code::get_u8_sizeof_size(s);
     res = std::format("ctx->cc.z = (({} & {}) == 0);", res, Code::imm(1 << bitindex));
 
-    flow_.ctx().writeln(pre + res + post + " // btst");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + res + post + " // btst");
 }
 
 void Recompiler::bchg(AddressingMode m, u8 xn, u8 bitindex) {
@@ -148,7 +149,7 @@ void Recompiler::bclr(AddressingMode m, u8 xn, u8 bitindex) {/*TODO compute_res(
     auto res = std::format("{} & (~(1 << {}))", src, bitindex);
     auto [dstpre, dst, dstpost] = fmt_set_value(dec, res);
 
-    flow_.ctx().writeln(pre + flags + dst + post + " // bclr");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + flags + dst + post + " // bclr");
 }
 
 void Recompiler::bset(AddressingMode m, u8 xn, u8 bitindex) {/*TODO compute_res()*/
@@ -158,7 +159,7 @@ void Recompiler::bset(AddressingMode m, u8 xn, u8 bitindex) {/*TODO compute_res(
     auto res = std::format("{} | (1 << {})", src, bitindex);
     auto [dstpre, dst, dstpost] = fmt_set_value(dec, res);
 
-    flow_.ctx().writeln(pre + flags + dst + post + " // bset");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + flags + dst + post + " // bset");
 }
 
 void Recompiler::btst_dn(u8 dn, AddressingMode m, u8 xn) {/*TODO compute_res()*/
@@ -169,7 +170,7 @@ void Recompiler::btst_dn(u8 dn, AddressingMode m, u8 xn) {/*TODO compute_res()*/
     auto [pre, res, post] = get_value(s, m, xn);
     res = std::format("ctx->cc.z = (({} & (1 << ({}%{}))) == 0);", res, src, Code::get_u8_sizeof_size(s));
     
-    flow_.ctx().writeln(pre + res + post + " // btst_dn");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + res + post + " // btst_dn");
 }
 
 void Recompiler::bchg_dn(u8 dn, AddressingMode m, u8 xn) {
@@ -188,7 +189,7 @@ void Recompiler::bclr_dn(u8 dn, AddressingMode m, u8 xn) {/*TODO compute_res()*/
     auto res = std::format("{} & (~(1 << {}))", src, dn_src);
     auto [dstpre, dst, dstpost] = fmt_set_value(ea, res);
 
-    flow_.ctx().writeln(pre + flags + dst + post + " // bclr");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + flags + dst + post + " // bclr");
 }
 
 void Recompiler::bset_dn(u8 dn, AddressingMode m, u8 xn) {/*TODO compute_res()*/
@@ -203,7 +204,7 @@ void Recompiler::bset_dn(u8 dn, AddressingMode m, u8 xn) {/*TODO compute_res()*/
     auto res = std::format("{} | (1 << {})", src, dn_src);
     auto [dstpre, dst, dstpost] = fmt_set_value(ea, res);
 
-    flow_.ctx().writeln(pre + flags + dst + post + " // bset");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + flags + dst + post + " // bset");
 }
 
 void Recompiler::movep(u8 dn, DirectionR d, Size s, u8 an, u16 displacement) { NOT_IMPLEMENTED }
@@ -215,7 +216,7 @@ void Recompiler::movea(Size s, u8 an, AddressingMode m, u8 xn) {/*TODO compute_r
     bool isNeedCtxMem = dec.mode != AddressingMode::AddressRegister;
     auto res = std::format("{} = {}{};", Code::an(an), isNeedCtxMem ? "ctx->mem + " : "", src);
 
-    flow_.ctx().writeln(pre + res + post + " // movea");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + res + post + " // movea");
 }
 
 void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode dst_m, u8 dst_xn) {/*TODO compute_res()*/
@@ -230,7 +231,7 @@ void Recompiler::move(Size s, AddressingMode src_m, u8 src_xn, AddressingMode ds
     auto [_dst_pre, _dst, _dst_post] = fmt_get_value(dst_dec);
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", _dst);
 
-    flow_.ctx().writeln(src_pre + dst_pre + dst + flags + src_post + dst_post + " // move");
+    flow_.ctx().writeln(src_.get_current_pc(), src_pre + dst_pre + dst + flags + src_post + dst_post + " // move");
 }
 
 void Recompiler::move_from_sr(AddressingMode m, u8 xn) {/*TODO compute_res()*/
@@ -243,7 +244,7 @@ void Recompiler::move_from_sr(AddressingMode m, u8 xn) {/*TODO compute_res()*/
                 " | (ctx->cc.n << 3)"
                 " | (ctx->cc.x << 4); ";
 
-    flow_.ctx().writeln(pre + r + src + post + " // move from sr");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + r + src + post + " // move from sr");
 }
 
 void Recompiler::move_to_ccr(AddressingMode m, u8 xn) {
@@ -252,7 +253,7 @@ void Recompiler::move_to_ccr(AddressingMode m, u8 xn) {
     auto r = pre + std::format("ctx->res={}; ", adr_reg_to_number_if_need(dec, src)) + post;
     std::string flags = Code::op_to_ccr();
 
-    flow_.ctx().writeln(r + flags + " // move to ccr");
+    flow_.ctx().writeln(src_.get_current_pc(), r + flags + " // move to ccr");
 }
 
 void Recompiler::move_to_sr(AddressingMode m, u8 xn) {
@@ -261,7 +262,7 @@ void Recompiler::move_to_sr(AddressingMode m, u8 xn) {
     auto r = pre + std::format("ctx->res={}; ", adr_reg_to_number_if_need(dec, src)) + post;
     std::string flags = Code::op_to_ccr();
 
-    flow_.ctx().writeln(r + flags + " // move to sr");
+    flow_.ctx().writeln(src_.get_current_pc(), r + flags + " // move to sr");
 }
 
 void Recompiler::negx(Size s, AddressingMode m, u8 xn) {
@@ -276,14 +277,14 @@ void Recompiler::negx(Size s, AddressingMode m, u8 xn) {
                                       adr_reg_to_number_if_need(dec, src), 0, Code::get_u8_sizeof_size(s) - 1);
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", adr_reg_to_number_if_need(dec, src));
     
-    flow_.ctx().writeln(pre + dst + flag_cv + flags + post + " // negx");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + dst + flag_cv + flags + post + " // negx");
 }
 
 void Recompiler::clr(Size s, AddressingMode m, u8 xn) {/*TODO compute_res()*/
     auto [pre, res, post] = set_value(s, m, xn, "0");
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", 0);
     
-    flow_.ctx().writeln(pre + res + flags + post + "// clr");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + res + flags + post + "// clr");
 }
 
 void Recompiler::neg(Size s, AddressingMode m, u8 xn) {
@@ -298,7 +299,7 @@ void Recompiler::neg(Size s, AddressingMode m, u8 xn) {
                                       adr_reg_to_number_if_need(dec, src), 0, Code::get_u8_sizeof_size(s) - 1);
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", adr_reg_to_number_if_need(dec, src));
     
-    flow_.ctx().writeln(pre + dst + flag_cv + flags + post + " // neg");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + dst + flag_cv + flags + post + " // neg");
 }
 
 void Recompiler::not_(Size s, AddressingMode m, u8 xn) {
@@ -307,13 +308,13 @@ void Recompiler::not_(Size s, AddressingMode m, u8 xn) {
     auto [pre, dst, post] = fmt_set_value(dec, "~"+src);
     auto flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", adr_reg_to_number_if_need(dec, src));
 
-    flow_.ctx().writeln(pre + dst + flags + post + flags);
+    flow_.ctx().writeln(src_.get_current_pc(), pre + dst + flags + post + flags);
 }
 
 void Recompiler::ext(Size s, u8 dn) {
     std::string res = std::format("{0} = ((0xFFFF{1} * ({0} >> ({2} - 1))) - ({2} << 1) - 1) | {0}; ", Code::dn(dn), s == Size::Byte ? "" : "FFFF", Code::get_u8_sizeof_size(s));
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", Code::dn(dn));
-    flow_.ctx().writeln(res + flags + "// ext");
+    flow_.ctx().writeln(src_.get_current_pc(), res + flags + "// ext");
 }
 
 void Recompiler::nbcd(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
@@ -321,7 +322,7 @@ void Recompiler::nbcd(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
 void Recompiler::swap(u8 dn) {
     std::string res = std::format("{0} = (({0} & 0xFFFF) << 16) | (({0} >> 16) & 0xFFFF);", Code::dn(dn));
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", Code::dn(dn));
-    flow_.ctx().writeln(res + flags + "// swap");
+    flow_.ctx().writeln(src_.get_current_pc(), res + flags + "// swap");
 }
 
 void Recompiler::pea(AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
@@ -334,7 +335,7 @@ void Recompiler::tst(Size s, AddressingMode m, u8 xn) {/*TODO compute_res()*/
     auto [pre, res, post] = get_value(s, m, xn);
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", res);
 
-    flow_.ctx().writeln(pre + flags + post + " // tst");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + flags + post + " // tst");
 }
 
 void Recompiler::trap(u8 vector) { NOT_IMPLEMENTED }
@@ -347,14 +348,15 @@ void Recompiler::move_usp(DirectionR d, u8 an) { NOT_IMPLEMENTED }
 
 void Recompiler::reset() { NOT_IMPLEMENTED }
 
-void Recompiler::nop() {}
+void Recompiler::nop() {
+}
 
 void Recompiler::stop(u16 word) { NOT_IMPLEMENTED }
 
 void Recompiler::rte() { NOT_IMPLEMENTED }
 
 void Recompiler::rts() {
-    flow_.ctx().writeln("return;");
+    flow_.ctx().writeln(src_.get_current_pc(), "return;");
     flow_.ret();
 }
 
@@ -458,7 +460,7 @@ void Recompiler::movem(DirectionR d, Size s, AddressingMode m, u8 xn, u16 reg_ma
     std::string val;
 
     if (d == DirectionR::RegisterToMemory) {
-        flow_.ctx().writeln("/* movem <reg to mem> start */");
+        flow_.ctx().writeln(src_.get_current_pc(), "/* movem <reg to mem> start */");
         for (u8 i = 0; i < 16; i++) {
             // TODO move register deoding to decode_movem_reg function
             if (((reg_mask >> (15 - i)) & 0b1) == 0) continue;
@@ -469,11 +471,11 @@ void Recompiler::movem(DirectionR d, Size s, AddressingMode m, u8 xn, u16 reg_ma
 
             auto [pre, dst, post] = fmt_set_value(ea, val);
 
-            flow_.ctx().writeln(pre + dst + post);
+            flow_.ctx().writeln(src_.get_current_pc(), pre + dst + post);
         }
-        flow_.ctx().writeln("/* movem <reg to mem> end */");
+        flow_.ctx().writeln(src_.get_current_pc(), "/* movem <reg to mem> end */");
     } else if (d == DirectionR::MemoryToRegister) {
-        flow_.ctx().writeln("/* movem <mem to reg> start */");
+        flow_.ctx().writeln(src_.get_current_pc(), "/* movem <mem to reg> start */");
         auto [pre, src, post] = fmt_get_value(ea);
 
         for (u8 i = 0; i < 16; i++) {
@@ -484,9 +486,9 @@ void Recompiler::movem(DirectionR d, Size s, AddressingMode m, u8 xn, u16 reg_ma
             else
                 val = Code::set_an(i - 8, "ctx->mem+" + src);
 
-            flow_.ctx().writeln(pre + val + post);
+            flow_.ctx().writeln(src_.get_current_pc(), pre + val + post);
         }
-        flow_.ctx().writeln("/* movem <mem to reg> end */");
+        flow_.ctx().writeln(src_.get_current_pc(), "/* movem <mem to reg> end */");
     }
 }
 
@@ -534,7 +536,7 @@ void Recompiler::lea(u8 an, AddressingMode m, u8 xn) {/*TODO compute_res()*/
     }
 
     std::string dst = Code::set_an(an, src);
-    flow_.ctx().writeln(dst + " // lea");
+    flow_.ctx().writeln(src_.get_current_pc(), dst + " // lea");
 }
 
 void Recompiler::chk(u8 dn, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
@@ -553,7 +555,7 @@ void Recompiler::addq(u8 data, Size s, AddressingMode m, u8 xn) {
                                       adr_reg_to_number_if_need(dec, src), data, Code::get_u8_sizeof_size(s) - 1);
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", adr_reg_to_number_if_need(dec, src));
 
-    flow_.ctx().writeln(pre + dst + flag_cv + flags + post + " // addq");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + dst + flag_cv + flags + post + " // addq");
 }
 
 void Recompiler::subq(u8 data, Size s, AddressingMode m, u8 xn) {
@@ -570,7 +572,7 @@ void Recompiler::subq(u8 data, Size s, AddressingMode m, u8 xn) {
                                       adr_reg_to_number_if_need(dec, src), data, Code::get_u8_sizeof_size(s) - 1);
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", adr_reg_to_number_if_need(dec, src));
 
-    flow_.ctx().writeln(pre + dst + flag_cv + flags + post + " // subq");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + dst + flag_cv + flags + post + " // subq");
 }
 
 void Recompiler::scc(Condition c, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
@@ -614,7 +616,7 @@ void Recompiler::bcc(Condition c, u8 displacement) {
 
 void Recompiler::moveq(u8 dn, u8 data) {/*TODO compute_res()*/
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", Code::dn(dn));
-    flow_.ctx().writeln(Code::set_dn(dn, Code::imm(data)) + flags + " // moveq");
+    flow_.ctx().writeln(src_.get_current_pc(), Code::set_dn(dn, Code::imm(data)) + flags + " // moveq");
 }
 
 void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) {/*TODO compute_res()*/
@@ -623,7 +625,7 @@ void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) {/*TODO compute_res()*/
     std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF)) ", pre, res, Code::dn(dn));
     std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8); ", Code::dn(dn), res);
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", res);
-    flow_.ctx().writeln(pre_ + res_ + flags + post + " // divu");
+    flow_.ctx().writeln(src_.get_current_pc(), pre_ + res_ + flags + post + " // divu");
 }
 
 void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) {/*TODO compute_res()*/
@@ -632,7 +634,7 @@ void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) {/*TODO compute_res()*/
     std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF)) ", pre, res, Code::dn(dn));
     std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8); ", Code::dn(dn), res);
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", res);
-    flow_.ctx().writeln(pre_ + res_ + flags + post + " // divs");
+    flow_.ctx().writeln(src_.get_current_pc(), pre_ + res_ + flags + post + " // divs");
 }
 
 void Recompiler::sbcd(u8 xn, Mode m, u8 xn2) { NOT_IMPLEMENTED }
@@ -647,11 +649,11 @@ void Recompiler::or_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
     if (d == DirectionO::ea_x_Dn_to_ea) {
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} | {}", ea_res, dn_res));
         std::string flags = std::format(" ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", adr_reg_to_number_if_need(ea_dec, ea_res));
-        flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // or to ea");
+        flow_.ctx().writeln(src_.get_current_pc(), dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // or to ea");
     } else {
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} | {}", adr_reg_to_number_if_need(ea_dec, ea_res), dn_res));
         std::string flags = std::format(" ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
-        flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // or to dn");
+        flow_.ctx().writeln(src_.get_current_pc(), ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // or to dn");
     }
 }
 
@@ -672,7 +674,7 @@ void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
                                           adr_reg_to_number_if_need(ea_dec, ea_res), dn_res, Code::get_u8_sizeof_size(s) - 1);
 
         std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", adr_reg_to_number_if_need(ea_dec, ea_res));
-        flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // sub to ea");
+        flow_.ctx().writeln(src_.get_current_pc(), dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // sub to ea");
     } else {
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} - {}", adr_reg_to_number_if_need(ea_dec, ea_res), dn_res));
 
@@ -683,7 +685,7 @@ void Recompiler::sub_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
                                           adr_reg_to_number_if_need(ea_dec, ea_res), dn_res, Code::get_u8_sizeof_size(s) - 1);
 
         std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", dn_res);
-        flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // sub to dn");
+        flow_.ctx().writeln(src_.get_current_pc(), dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // sub to dn");
     }
 }
 
@@ -701,11 +703,11 @@ void Recompiler::eor_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
     if (d == DirectionO::ea_x_Dn_to_ea) {
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} ^ {}", ea_res, dn_res));
         std::string flags = std::format(" ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", adr_reg_to_number_if_need(ea_dec, ea_res));
-        flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // eor to ea");
+        flow_.ctx().writeln(src_.get_current_pc(), dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // eor to ea");
     } else {
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} ^ {}", adr_reg_to_number_if_need(ea_dec, ea_res), dn_res));
         std::string flags = std::format(" ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
-        flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // eor to dn");
+        flow_.ctx().writeln(src_.get_current_pc(), ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // eor to dn");
     }
 }
 
@@ -723,7 +725,7 @@ void Recompiler::cmp_(u8 dn, Size s, AddressingMode m, u8 xn) {
                              "ctx->cc.c=({0} < {1});",                      // C
                              dst, adr_reg_to_number_if_need(dec, src), Code::get_u8_sizeof_size(s) - 1);
 
-    flow_.ctx().writeln(pre + res + flags + post);
+    flow_.ctx().writeln(src_.get_current_pc(), pre + res + flags + post);
 }
 
 void Recompiler::cmpa_(u8 an, Size s, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
@@ -746,11 +748,11 @@ void Recompiler::and_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
     if (d == DirectionO::ea_x_Dn_to_ea) {
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(ea_dec, std::format("{} & {}", ea_res, dn_res));
         std::string flags = std::format(" ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", adr_reg_to_number_if_need(ea_dec, ea_res));
-        flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // and to ea");
+        flow_.ctx().writeln(src_.get_current_pc(), dn_pre + dst_pre + dst_res + flags + dst_post + dn_post + " // and to ea");
     } else {
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} & {}", adr_reg_to_number_if_need(ea_dec, ea_res), dn_res));
         std::string flags = std::format(" ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", dn_res);
-        flow_.ctx().writeln(ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // and to dn");
+        flow_.ctx().writeln(src_.get_current_pc(), ea_pre + dst_pre + dst_res + flags + dst_post + ea_post + " // and to dn");
     }
 }
 
@@ -771,7 +773,7 @@ void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
                                           adr_reg_to_number_if_need(ea_dec, ea_res), dn_res, Code::get_u8_sizeof_size(s) - 1);
 
         std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", adr_reg_to_number_if_need(ea_dec, ea_res));
-        flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // add to ea");
+        flow_.ctx().writeln(src_.get_current_pc(), dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // add to ea");
     } else {
         auto [dst_pre, dst_res, dst_post] = fmt_set_value(dn_dec, std::format("{} + {}", adr_reg_to_number_if_need(ea_dec, ea_res), dn_res));
 
@@ -782,7 +784,7 @@ void Recompiler::add_(u8 dn, DirectionO d, Size s, AddressingMode m, u8 xn) {
                                           adr_reg_to_number_if_need(ea_dec, ea_res), dn_res, Code::get_u8_sizeof_size(s) - 1);
 
         std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.x=ctx->cc.c;", dn_res);
-        flow_.ctx().writeln(dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // add to dn");
+        flow_.ctx().writeln(src_.get_current_pc(), dn_pre + dst_pre + dst_res + flag_cv + flags + dst_post + dn_post + " // add to dn");
     }
 }
 
@@ -794,7 +796,7 @@ void Recompiler::adda_(u8 an, Size s, AddressingMode m, u8 xn) {
     
     std::string res = std::format("{} += {};", Code::an(an), adr_reg_to_number_if_need(dec, src));
 
-    flow_.ctx().writeln(pre + res + post + " // adda");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + res + post + " // adda");
 }
 
 void Recompiler::asd(RotationDirection d, AddressingMode m, u8 xn) {
@@ -807,7 +809,7 @@ void Recompiler::asd(RotationDirection d, AddressingMode m, u8 xn) {
         flag_c = "ctx->cc.n=(ctx->res<0); " + flag_c + std::format(" if(ctx->cc.n) {} -= 1 << {}; ", src, Code::get_u8_sizeof_size(Size::Word) - 1);
     std::string flags = std::format("ctx->cc.z=(ctx->res==0); ctx->cc.v=0;");
 
-    flow_.ctx().writeln(pre + src + flag_c + flags + post + " // asd ");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + src + flag_c + flags + post + " // asd ");
 }
 
 void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {
@@ -817,7 +819,7 @@ void Recompiler::lsd(RotationDirection d, AddressingMode m, u8 xn) {
     std::string flag_c = std::format("ctx->res={0}; ctx->cc.c={2}; ctx->cc.x=ctx->cc.c; {0} {1}= 1;", src, op, d == RotationDirection::Left ? std::format("(ctx->res >> ({} & 0b1))", Code::get_u8_sizeof_size(Size::Word) - 1) : "ctx->res & 0b1");
     std::string flags = std::format("ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0;");
 
-    flow_.ctx().writeln(pre + src + flag_c + flags + post + " // lsd ");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + src + flag_c + flags + post + " // lsd ");
 }
 
 void Recompiler::rox(RotationDirection d, AddressingMode m, u8 xn) { NOT_IMPLEMENTED }
@@ -831,7 +833,7 @@ void Recompiler::rod(RotationDirection d, AddressingMode m, u8 xn) {
     std::string flag_c = std::format("ctx->res={}; ctx->cc.c={};", src, d == RotationDirection::Left ? "ctx->res & 0b1" : std::format("(ctx->res >> ({} & 0b1))", Code::get_u8_sizeof_size(Size::Word) - 1));
     std::string flags = std::format("ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0;");
 
-    flow_.ctx().writeln(pre + src + flag_c + flags + post + " // rod ");
+    flow_.ctx().writeln(src_.get_current_pc(), pre + src + flag_c + flags + post + " // rod ");
 }
 
 void Recompiler::asd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) {
@@ -854,7 +856,7 @@ void Recompiler::asd_rotation(u8 rotation, RotationDirection d, Size s, Rotation
         flag_c = "ctx->cc.n=(ctx->res<0); " + flag_c + std::format(" if(ctx->cc.n) {} -= 1 << ({} - {}); ", Code::dn(dn), Code::get_u8_sizeof_size(s) - 1, count_shift);
     std::string flags = std::format("ctx->cc.z=(ctx->res==0); ctx->cc.v=0;");
 
-    flow_.ctx().writeln(src + flag_c + flags + std::format(" // asd_rotation {}", rotation));
+    flow_.ctx().writeln(src_.get_current_pc(), src + flag_c + flags + std::format(" // asd_rotation {}", rotation));
 }
 
 void Recompiler::lsd_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) {
@@ -873,7 +875,7 @@ void Recompiler::lsd_rotation(u8 rotation, RotationDirection d, Size s, Rotation
     std::string flag_c = std::format("ctx->res={0}; ctx->cc.c={2}; ctx->cc.x=ctx->cc.c; {0} {1}= 1;", Code::dn(dn), op, d == RotationDirection::Left ? std::format("(ctx->res >> ({} & 0b1))", Code::get_u8_sizeof_size(s) - 1) : "ctx->res & 0b1");
     std::string flags = std::format("ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0;");
 
-    flow_.ctx().writeln(src + flag_c + flags + std::format(" // lsd_rotation {}", rotation));
+    flow_.ctx().writeln(src_.get_current_pc(), src + flag_c + flags + std::format(" // lsd_rotation {}", rotation));
 }
 
 void Recompiler::rox_rotation(u8 rotation, RotationDirection d, Size s, Rotation m, u8 dn) {
@@ -888,9 +890,9 @@ void Recompiler::rox_rotation(u8 rotation, RotationDirection d, Size s, Rotation
     }
 
     if (d == RotationDirection::Left) {
-        flow_.ctx().writeln(std::format("{0} = ROXL({0}, {1});", Code::dn(dn), rot_value));
+        flow_.ctx().writeln(src_.get_current_pc(), std::format("{0} = ROXL({0}, {1});", Code::dn(dn), rot_value));
     } else {
-        flow_.ctx().writeln(std::format("{0} = ROXR({0}, {1});", Code::dn(dn), rot_value));
+        flow_.ctx().writeln(src_.get_current_pc(), std::format("{0} = ROXR({0}, {1});", Code::dn(dn), rot_value));
     }
 }
 
@@ -911,17 +913,37 @@ void Recompiler::rod_rotation(u8 rotation, RotationDirection d, Size s, Rotation
     std::string flag_c = std::format("ctx->res={}; ctx->cc.c={};", Code::dn(dn), d == RotationDirection::Left ? "ctx->res & 0b1" : std::format("(ctx->res >> {} & 0b1)", Code::get_u8_sizeof_size(s) - 1));
     std::string flags = std::format("ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0;");
 
-    flow_.ctx().writeln(src + flag_c + flags + std::format(" // rod_rotation {}", rotation));
+    flow_.ctx().writeln(src_.get_current_pc(), src + flag_c + flags + std::format(" // rod_rotation {}", rotation));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
 
 void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post, bool exit_on_return) {
-    u32 adr = dst_adr;
+    u32 adr = dst_adr; //adr function
+    u32 pc = flow_.ctx().adr;
+    u32 current_adr = src_.get_current_pc();
     auto fn_name = flow_.get_name_for_label(adr);
+    if(pc < adr && adr < current_adr){
+        auto counter  = flow_.ctx().line_list.size();
+        std::tuple<u32, std::string> tuple_val;
+        do {
+            counter--;
+            tuple_val = flow_.ctx().line_list[counter];
+        } while(std::get<0>(tuple_val) > adr);
+        
+        tuple_val = {adr, "do {"};
+        flow_.ctx().line_list.insert(std::next(flow_.ctx().line_list.begin(),counter), tuple_val);
 
-    flow_.ctx().writeln(pre + Code::call_function(fn_name) + post);
+        std::string mod_post = post.replace(post.find("return"), 6, "break");
+        if (pre != "") flow_.ctx().writeln(current_adr, pre + mod_post);
+        flow_.ctx().writeln(current_adr, "} while(1);");
+
+        if(exit_on_return) flow_.ret();
+        return;
+    }
+
+    flow_.ctx().writeln(src_.get_current_pc(), pre + Code::call_function(fn_name) + post);
 
     // if (flow_.ctx().adr == adr) {
     //     flow_.ret();
@@ -937,15 +959,15 @@ void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post, b
 void Recompiler::call_xn_function(u32 pc, u32 dst_adr, std::string xn, std::string pre, std::string post, bool exit_on_return, std::string comment) {
     auto &xn_list = flow_.get_xn_list_for_adr(pc);
 
-    flow_.ctx().writeln(std::format("switch ({}) {{{}", xn, comment));
+    flow_.ctx().writeln(src_.get_current_pc(), std::format("switch ({}) {{{}", xn, comment));
     for (auto &i: xn_list) {
         u32 adr = dst_adr + ((u32)i);
         auto fn_name = flow_.get_name_for_label(adr);
 
-        flow_.ctx().writeln(std::format("\tcase {}: {} break;", Code::imm(i), pre + Code::call_function(fn_name) + post));
+        flow_.ctx().writeln(src_.get_current_pc(), std::format("\tcase {}: {} break;", Code::imm(i), pre + Code::call_function(fn_name) + post));
     }
-    flow_.ctx().writeln("}");
-    if(exit_on_return) flow_.ctx().writeln("return;");
+    flow_.ctx().writeln(src_.get_current_pc(), "}");
+    if(exit_on_return) flow_.ctx().writeln(src_.get_current_pc(), "return;");
 
 
     std::vector<u32> addresses;

@@ -67,12 +67,14 @@ public:
 
     u32 get_pc() { return pc_; }
     void set_pc(u32 pc) { pc_ = pc; }
-
+    void update_current_pc() { current_pc = pc_; }
+    u32 get_current_pc() { return current_pc; }
     u32 last_read_value() { return last_read_value_; }
-
-private:
+    
+    private:
     std::ifstream file_;
     u32 pc_;
+    u32 current_pc;
     u32 last_read_value_;
 };
 
