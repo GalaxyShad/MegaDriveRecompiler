@@ -24,7 +24,8 @@ public:
 
             out << "void " << pair.second.name << "(Context* ctx) {\n";
             for (const auto &line : pair.second.line_list) {
-                out << std::format("/*0x{:04x}*/", std::get<0>(line)) << "    " << std::get<1>(line) << "\n";
+                out << "\t" << std::get<1>(line) << "\n";
+                // out << std::format("/*0x{:04x}*/", std::get<0>(line)) << "    " << std::get<1>(line) << "\n";
             }
             out << "}\n\n";
         }

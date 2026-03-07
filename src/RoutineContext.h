@@ -4,6 +4,7 @@
 #include "tinyint.h"
 #include <stack>
 #include <string>
+#include <utility>
 #include <vector>
 
 struct RoutineContext {
@@ -14,7 +15,7 @@ struct RoutineContext {
     bool is_translation_finished;
 
     // std::stack<u32> addresses_to_jmp;
-    std::vector<std::tuple<u32, std::string>> line_list;
+    std::vector<std::pair<u32, std::string>> line_list;
 
     void writeln(u32 current_pc, const std::string &line) {
         line_list.push_back({current_pc,line});

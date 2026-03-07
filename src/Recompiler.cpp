@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 
 static void not_impl_(const std::string &fname, RecompilerFlow &flow) {
     RecompilerSourceGenerator gen(flow);
@@ -622,7 +623,7 @@ void Recompiler::moveq(u8 dn, u8 data) {/*TODO compute_res()*/
 void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) {/*TODO compute_res()*/
     auto [pre, res, post] = get_value(Size::Word, m, xn);
 
-    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF)) ", pre, res, Code::dn(dn));
+    std::string pre_ = std::format("{0} if(({1} != 0) && ({2} / {1} <= 0xFF)) ", pre, res, Code::dn(dn));
     std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8); ", Code::dn(dn), res);
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", res);
     flow_.ctx().writeln(src_.get_current_pc(), pre_ + res_ + flags + post + " // divu");
@@ -631,7 +632,7 @@ void Recompiler::divu(u8 dn, AddressingMode m, u8 xn) {/*TODO compute_res()*/
 void Recompiler::divs(u8 dn, AddressingMode m, u8 xn) {/*TODO compute_res()*/
     auto [pre, res, post] = get_value(Size::Word, m, xn);
 
-    std::string pre_ = std::format("{0}\nif(({1} != 0) && ({2} / {1} <= 0xFF)) ", pre, res, Code::dn(dn));
+    std::string pre_ = std::format("{0} if(({1} != 0) && ({2} / {1} <= 0xFF)) ", pre, res, Code::dn(dn));
     std::string res_ = std::format("{0} = (({0} / {1}) & 0xFF) | ((({0} % {1}) & 0xFF) << 8); ", Code::dn(dn), res);
     std::string flags = std::format("ctx->res={}; ctx->cc.n=(ctx->res<0); ctx->cc.z=(ctx->res==0); ctx->cc.v=0; ctx->cc.c=0;", res);
     flow_.ctx().writeln(src_.get_current_pc(), pre_ + res_ + flags + post + " // divs");
@@ -924,20 +925,22 @@ void Recompiler::call_function(u32 dst_adr, std::string pre, std::string post, b
     u32 pc = flow_.ctx().adr;
     u32 current_adr = src_.get_current_pc();
     auto fn_name = flow_.get_name_for_label(adr);
-    if(pc < adr && adr < current_adr){
+    if(pc <= adr && adr < current_adr){
         auto counter  = flow_.ctx().line_list.size();
-        std::tuple<u32, std::string> tuple_val;
+        std::pair<u32, std::string> line;
         do {
             counter--;
-            tuple_val = flow_.ctx().line_list[counter];
-        } while(std::get<0>(tuple_val) > adr);
+            line = flow_.ctx().line_list[counter];
+            line.second = "\t" + line.second;
+            flow_.ctx().line_list[counter] = line;
+        } while(line.first > adr);
         
-        tuple_val = {adr, "do {"};
-        flow_.ctx().line_list.insert(std::next(flow_.ctx().line_list.begin(),counter), tuple_val);
+        line = {adr, "while(1) {"};
+        flow_.ctx().line_list.insert(std::next(flow_.ctx().line_list.begin(),counter), line);
 
         std::string mod_post = post.replace(post.find("return"), 6, "break");
-        if (pre != "") flow_.ctx().writeln(current_adr, pre + mod_post);
-        flow_.ctx().writeln(current_adr, "} while(1);");
+        if (pre != "") flow_.ctx().writeln(current_adr, "\t" + pre + mod_post);
+        flow_.ctx().writeln(current_adr, "}");
 
         if(exit_on_return) flow_.ret();
         return;
