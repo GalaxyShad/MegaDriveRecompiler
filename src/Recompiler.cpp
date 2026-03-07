@@ -586,7 +586,7 @@ void Recompiler::dbcc(Condition c, u8 dn, u16 displacement) {
     i16 displ = displacement-2;
     u32 dst_adr = src_.get_pc() + displ;
 
-    call_function(dst_adr, std::format("if (!{0}) {{ {1}--; if({1} != -1) {{ ", cond, Code::dn(dn)), " return; }} // dbcc");
+    call_function(dst_adr, std::format("if (!{0}) {{ {1}--; if({1} == -1) {{ ", cond, Code::dn(dn)), " return; }} // dbcc");
 }
 
 void Recompiler::bra(u8 displacement) {
@@ -612,7 +612,7 @@ void Recompiler::bcc(Condition c, u8 displacement) {
     i16 displ = (displacement == 0) ? src_.get_next_word() - 2 : (i8) displacement;
     u32 dst_adr = src_.get_pc() + displ;
 
-    call_function(dst_adr, std::format("if {} {{ ", cond), " return; } // bcc");
+    call_function(dst_adr, std::format("if (!{}) {{ ", cond), " return; } // bcc");
 }
 
 void Recompiler::moveq(u8 dn, u8 data) {/*TODO compute_res()*/

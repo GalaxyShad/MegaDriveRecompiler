@@ -24,12 +24,11 @@ public:
 
             out << "void " << pair.second.name << "(Context* ctx) {\n";
             for (const auto &line : pair.second.line_list) {
-                out << "\t" << std::get<1>(line) << "\n";
-                // out << std::format("/*0x{:04x}*/", std::get<0>(line)) << "    " << std::get<1>(line) << "\n";
+                out << "\t" << line.second << "\n";
+                // out << std::format("/*0x{:04x}*/", line.first) << "\t" << line.second << "\n";
             }
             out << "}\n\n";
         }
-
         out.close();
     }
 
